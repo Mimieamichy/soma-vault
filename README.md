@@ -1,73 +1,48 @@
-# Welcome to your Lovable project
+# Study Vault
 
-## Project info
+A modern SaaS web application for students to organize study materials, create personalized study plans, and access AI-powered question answering from their documents.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🎨 Brand Colors (Extracted from Logo)
 
-## How can I edit this code?
+- **Primary (Navy):** HSL(215, 28%, 25%) - Main navigation, text, headings
+- **Accent (Crimson):** HSL(0, 70%, 42%) - CTAs, highlights, important elements
+- **Secondary (Beige):** HSL(30, 25%, 78%) - Backgrounds, cards
+- **Background:** HSL(35, 30%, 96%) - Page backgrounds
 
-There are several ways of editing your application.
+## 🚀 Getting Started
 
-**Use Lovable**
+```bash
+# Install dependencies
+npm install
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 📁 Project Structure
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```
+study-vault/
+├── src/
+│   ├── assets/           # Static assets (logo, images)
+│   ├── components/
+│   │   ├── layout/       # Sidebar, TopNav, MainLayout
+│   │   ├── archive/      # FolderTree, MaterialCard, UploadZone, PQHub
+│   │   ├── planner/      # StudyPlanForm, FragmentCard
+│   │   └── ui/           # Shadcn UI components
+│   ├── pages/            # Dashboard, Archive, StudyPlanner, Profile
+│   └── main.tsx
+├── backend/              # Empty (placeholder for future backend)
+└── package.json
+```
 
-**Use GitHub Codespaces**
+## 📱 Features
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- **Dashboard:** Stats overview, weekly progress chart, recent activity
+- **Archive:** Folder navigation, file uploads, PQ Hub AI Q&A
+- **Study Planner:** Create plans, timeline view, fragment editing
+- **Profile:** Settings, theme preview, subscription plans
 
-## What technologies are used for this project?
+## 🔧 Tech Stack
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+React 18 + TypeScript | Vite | Tailwind CSS | Lucide Icons | React Router | Recharts | Shadcn/ui
