@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Study Vault Design System - Colors extracted from logo */
+@layer base {
+  :root {
+    /* Primary - Navy Blue (#282e3b) */
+    --primary: 221 19% 19%;
+    --primary-foreground: 37 39% 95%;
+    
+    /* Secondary - Beige (#DFCFB6) */
+    --secondary: 37 39% 80%;
+    --secondary-foreground: 221 19% 19%;
+    
+    /* Accent - Crimson Red */
+    --accent: 0 70% 42%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* Background - Light beige tint */
+    --background: 37 39% 96%;
+    --foreground: 221 19% 19%;
+    
+    /* Card */
+    --card: 37 39% 98%;
+    --card-foreground: 221 19% 19%;
+    
+    /* Popover */
+    --popover: 37 39% 98%;
+    --popover-foreground: 221 19% 19%;
+    
+    /* Muted */
+    --muted: 37 39% 90%;
+    --muted-foreground: 221 15% 45%;
+    
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Border & Input */
+    --border: 37 39% 85%;
+    --input: 37 39% 88%;
+    --ring: 221 19% 19%;
+    
+    --radius: 0.75rem;
+    
+    /* Sidebar */
+    --sidebar-background: 221 19% 19%;
+    --sidebar-foreground: 37 39% 95%;
+    --sidebar-primary: 37 39% 80%;
+    --sidebar-primary-foreground: 221 19% 19%;
+    --sidebar-accent: 221 19% 25%;
+    --sidebar-accent-foreground: 37 39% 95%;
+    --sidebar-border: 221 19% 30%;
+    --sidebar-ring: 37 39% 80%;
+  }
+
+  .dark {
+    --primary: 37 39% 80%;
+    --primary-foreground: 221 19% 19%;
+    --secondary: 221 19% 19%;
+    --secondary-foreground: 37 39% 80%;
+    --accent: 0 70% 50%;
+    --accent-foreground: 0 0% 100%;
+    --background: 221 19% 12%;
+    --foreground: 37 39% 95%;
+    --card: 221 19% 15%;
+    --card-foreground: 37 39% 95%;
+    --popover: 221 19% 15%;
+    --popover-foreground: 37 39% 95%;
+    --muted: 221 19% 20%;
+    --muted-foreground: 37 15% 65%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 221 19% 25%;
+    --input: 221 19% 25%;
+    --ring: 37 39% 80%;
+    --sidebar-background: 221 19% 10%;
+    --sidebar-foreground: 37 39% 95%;
+    --sidebar-primary: 37 39% 80%;
+    --sidebar-primary-foreground: 221 19% 19%;
+    --sidebar-accent: 221 19% 18%;
+    --sidebar-accent-foreground: 37 39% 95%;
+    --sidebar-border: 221 19% 20%;
+    --sidebar-ring: 37 39% 80%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5;
+  }
+  
+  .sidebar-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted rounded-full;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
+}

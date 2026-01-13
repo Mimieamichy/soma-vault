@@ -32,7 +32,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       }`}
     >
       {/* Logo */}
-      <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
+      <div className="flex items-center  h-16 px-4 border-b border-sidebar-border">
         <img 
           src={logo} 
           alt="Study Vault" 
@@ -55,8 +55,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               to={item.path}
               className={`flex items-center gap-3 px-3 py-3 mb-1 rounded-lg transition-all duration-200 group ${
                 isActive 
-                  ? 'bg-sidebar-primary text-sidebar-primary-foreground' 
-                  : 'hover:bg-sidebar-accent text-sidebar-foreground/80 hover:text-sidebar-foreground'
+                  ? 'bg-accent text-accent-foreground' 
+                  : 'hover:bg-accent text-sidebar-foreground/80 hover:text-accent-foreground'
               }`}
             >
               <Icon className={`h-5 w-5 flex-shrink-0 ${collapsed ? 'mx-auto' : ''}`} />
@@ -71,7 +71,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Collapse Toggle */}
       <button
         onClick={onToggle}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 p-2 rounded-lg bg-sidebar-accent hover:bg-sidebar-primary transition-colors"
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 p-2 rounded-lg bg-sidebar-accent hover:bg-accent hover:text-accent-foreground transition-colors"
         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         {collapsed ? (
