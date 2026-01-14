@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopNav } from './TopNav';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -13,6 +14,7 @@ const pageTitles: Record<string, string> = {
 export function MainLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
+  const isMobile = useIsMobile();
   
   const pageTitle = pageTitles[location.pathname] || 'Study Vault';
 
@@ -25,11 +27,13 @@ export function MainLayout() {
       
       <div 
         className={`sidebar-transition ${
-          sidebarCollapsed ? 'ml-16' : 'ml-64'
+          isMobile 
+            ? 'ml-0' 
+            : sidebarCollapsed ? 'ml-16' : 'ml-64'
         }`}
       >
         <TopNav title={pageTitle} />
-        <main className="p-6">
+        <main className="p-4 sm:p-6">
           <Outlet />
         </main>
       </div>

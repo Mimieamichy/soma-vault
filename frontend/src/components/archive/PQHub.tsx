@@ -30,7 +30,7 @@ const mockMessages: Message[] = [
   },
 ];
 
-export function PQHub() {
+export function PQHub({ materialName }: { materialName?: string }) {
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [input, setInput] = useState('');
 
@@ -65,7 +65,7 @@ export function PQHub() {
           PQ Hub - Ask Your Materials
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Get instant answers from your uploaded study materials
+          {materialName ? `Chatting about ${materialName}` : 'Get instant answers from your uploaded study materials'}
         </p>
       </div>
       

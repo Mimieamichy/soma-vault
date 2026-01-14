@@ -8,47 +8,73 @@ interface FolderNode {
   children?: FolderNode[];
 }
 
-const mockFolders: FolderNode[] = [
-  {
-    id: '1',
-    name: 'Science',
-    children: [
-      {
-        id: '1-1',
-        name: 'Chemistry',
-        children: [
-          { id: '1-1-1', name: 'Organic Chemistry' },
-          { id: '1-1-2', name: 'Inorganic Chemistry' },
-        ],
-      },
-      {
-        id: '1-2',
-        name: 'Physics',
-        children: [
-          { id: '1-2-1', name: 'Mechanics' },
-          { id: '1-2-2', name: 'Thermodynamics' },
-        ],
-      },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Mathematics',
-    children: [
-      { id: '2-1', name: 'Calculus' },
-      { id: '2-2', name: 'Linear Algebra' },
-      { id: '2-3', name: 'Statistics' },
-    ],
-  },
-  {
-    id: '3',
-    name: 'Computer Science',
-    children: [
-      { id: '3-1', name: 'Data Structures' },
-      { id: '3-2', name: 'Algorithms' },
-    ],
-  },
-];
+const mockData = {
+  materials: [
+    {
+      id: 'm-ful',
+      name: 'Federal University of Lafia',
+      children: [
+        {
+          id: 'm-ful-cs',
+          name: 'Computer Science',
+          children: [
+            {
+              id: 'm-ful-cs-100',
+              name: '100 Level',
+              children: [],
+            },
+          ],
+        },
+        {
+          id: 'm-ful-slt',
+          name: 'SLT',
+          children: [],
+        },
+      ],
+    },
+    {
+      id: 'm-unizik',
+      name: 'Nnamdi Azikiwe University',
+      children: [
+        {
+          id: 'm-unizik-music',
+          name: 'Music',
+          children: [
+            {
+              id: 'm-unizik-music-200',
+              name: '200 Level',
+              children: [],
+            },
+          ],
+        },
+        {
+          id: 'm-unizik-ta',
+          name: 'Theatre Arts',
+          children: [],
+        },
+      ],
+    },
+  ],
+  pq: [
+    {
+      id: 'pq-ful',
+      name: 'Federal University of Lafia',
+      children: [
+        {
+          id: 'pq-ful-cs',
+          name: 'Computer Science',
+          children: [
+            {
+              id: 'pq-ful-cs-100',
+              name: '100 Level',
+              children: [],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
 
 interface FolderItemProps {
   folder: FolderNode;
@@ -114,12 +140,15 @@ function FolderItem({ folder, level, selectedId, onSelect }: FolderItemProps) {
 interface FolderTreeProps {
   onSelect: (id: string) => void;
   selectedId: string | null;
+  type: 'materials' | 'pq';
 }
 
-export function FolderTree({ onSelect, selectedId }: FolderTreeProps) {
+export function FolderTree({ onSelect, selectedId, type }: FolderTreeProps) {
+  const folders = mockData[type];
+
   return (
     <div className="space-y-1">
-      {mockFolders.map((folder) => (
+      {folders.map((folder) => (
         <FolderItem
           key={folder.id}
           folder={folder}

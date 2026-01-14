@@ -9,6 +9,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import Dashboard from "./pages/Dashboard";
 import Archive from "./pages/Archive";
+import MyLibrary from "./pages/MyLibrary";
 import StudyPlanner from "./pages/StudyPlanner";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -34,6 +35,7 @@ const App = () => (
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/archive" element={<Archive />} />
+                  <Route path="/library" element={<MyLibrary />} />
                   <Route path="/study-planner" element={<StudyPlanner />} />
                   <Route path="/profile" element={<Profile />} />
                 </Route>

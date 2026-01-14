@@ -15,9 +15,11 @@ interface Fragment {
 
 interface StudyPlan {
   courseName: string;
+  level: string;
   frequency: string;
   duration: string;
   fragments: Fragment[];
+  files?: File[];
 }
 
 const generateMockPlan = (courseName: string): Fragment[] => [
@@ -74,7 +76,13 @@ const generateMockPlan = (courseName: string): Fragment[] => [
 export default function StudyPlanner() {
   const [studyPlan, setStudyPlan] = useState<StudyPlan | null>(null);
 
-  const handleCreatePlan = (data: { courseName: string; frequency: string; duration: string }) => {
+  const handleCreatePlan = (data: { 
+    courseName: string; 
+    level: string;
+    frequency: string; 
+    duration: string;
+    files: File[];
+  }) => {
     setStudyPlan({
       ...data,
       fragments: generateMockPlan(data.courseName),

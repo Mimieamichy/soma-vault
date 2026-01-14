@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, LogOut } from 'lucide-react';
+import { Search, LogOut, Menu } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { NotificationsModal } from './NotificationsModal';
+import { ModeToggle } from '@/components/mode-toggle';
+import { SidebarContent } from './SidebarContent';
 
 interface TopNavProps {
   title: string;
@@ -31,6 +38,7 @@ interface TopNavProps {
 
 export function TopNav({ title }: TopNavProps) {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { logout, user } = useAuth();
   const navigate = useNavigate();
 
@@ -46,10 +54,25 @@ export function TopNav({ title }: TopNavProps) {
 
   return (
     <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
-      <div className="h-full flex items-center justify-between px-6">
-        <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+      <div className="h-full flex items-center justify-between px-4 sm:px-6">
+        <div className="flex items-center gap-3">
+          {/* Mobile Sidebar Trigger */}
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-64 bg-sidebar border-r border-sidebar-border">
+              <SidebarContent onLinkClick={() => setMobileOpen(false)} />
+            </SheetContent>
+          </Sheet>
+
+          <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+        </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           {/* Search */}
           <div className="relative hidden md:block">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -59,6 +82,9 @@ export function TopNav({ title }: TopNavProps) {
             />
           </div>
           
+          {/* Mode Toggle */}
+          <ModeToggle />
+
           {/* Notifications */}
           <NotificationsModal />
           

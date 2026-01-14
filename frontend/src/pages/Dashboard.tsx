@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   BookOpen, 
   FileText, 
@@ -8,9 +10,11 @@ import {
   FolderOpen,
   Clock
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/ui/stat-card';
 import { ActivityItem } from '@/components/ui/activity-item';
+import { UploadModal } from '@/components/archive/UploadModal';
 import { 
   LineChart, 
   Line, 
@@ -80,6 +84,24 @@ const progressData = [
 ];
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [level, setLevel] = useState('');
+  const [courseName, setCourseName] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const handleUploadSubmit = () => {
+    if (!level || !courseName || !selectedFile) {
+      toast.error('Please select level, enter course name, and choose a file.');
+      return;
+    }
+    toast.success(`Successfully uploaded ${selectedFile.name} to My Library`);
+    setUploadOpen(false);
+    setLevel('');
+    setCourseName('');
+    setSelectedFile(null);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header with CTAs */}
@@ -89,11 +111,25 @@ export default function Dashboard() {
           <p className="text-muted-foreground">Here's what's happening with your studies</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => setUploadOpen(true)}>
             <Upload className="h-4 w-4" />
             Upload Material
           </Button>
-          <Button className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground">
+          <UploadModal
+            open={uploadOpen}
+            onOpenChange={setUploadOpen}
+            onSubmit={handleUploadSubmit}
+            level={level}
+            setLevel={setLevel}
+            courseName={courseName}
+            setCourseName={setCourseName}
+            onFileSelect={(files) => setSelectedFile(files[0] || null)}
+          />
+          
+          <Button 
+            className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground"
+            onClick={() => navigate('/study-planner')}
+          >
             <Plus className="h-4 w-4" />
             Create Study Plan
           </Button>

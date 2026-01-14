@@ -15,7 +15,7 @@ import { useNotifications } from '@/context/NotificationContext';
 import type { Notification } from '@/context/NotificationContext';
 
 export function NotificationsModal() {
-  const { notifications, markAsRead, clearAll, unreadCount } = useNotifications();
+  const { notifications, markAsRead, unreadCount } = useNotifications();
   const [open, setOpen] = useState(false);
 
   const getIcon = (type: Notification['type']) => {
@@ -55,24 +55,13 @@ export function NotificationsModal() {
       <DialogContent className="sm:max-w-md p-0">
         <DialogHeader className="px-6 py-4 border-b">
           <div className="flex items-center justify-between">
-            <DialogTitle>Notifications</DialogTitle>
+            <DialogTitle>Notifications  </DialogTitle>
             <div className="flex items-center gap-2">
               {unreadCount > 0 && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs mr-4">
                   {unreadCount} new
                 </Badge>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  clearAll();
-                  setOpen(false);
-                }}
-                className="text-xs"
-              >
-                Clear all
-              </Button>
             </div>
           </div>
         </DialogHeader>
