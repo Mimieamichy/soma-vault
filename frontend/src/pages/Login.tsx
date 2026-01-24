@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import logo from '@/assets/logo.png';
+import logoDark from '@/assets/logo-darkmode.png';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -17,7 +18,7 @@ export default function Login() {
     e.preventDefault();
     if (email && password) {
       login(email);
-      navigate('/dashboard');
+      navigate('/study-planner');
     }
   };
 
@@ -26,7 +27,12 @@ export default function Login() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-             <img src={logo} alt="Study Vault" className="h-12 w-auto" />
+            <Link to="/">
+              <span className="inline-block h-12">
+                <img src={logo} alt="Soma Vault" className="h-12 w-auto dark:hidden" />
+                <img src={logoDark} alt="Soma Vault" className="h-12 w-auto hidden dark:inline" />
+              </span>
+            </Link>
           </div>
           <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
           <CardDescription>

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import logo from '@/assets/logo.png';
+import logoDark from '@/assets/logo-darkmode.png';
 
 export default function Signup() {
   const [name, setName] = useState('');
@@ -20,7 +21,7 @@ export default function Signup() {
     e.preventDefault();
     if (email && password && name && school && department) {
       signup(email, name, school, department);
-      navigate('/dashboard');
+      navigate('/study-planner');
     }
   };
 
@@ -29,7 +30,12 @@ export default function Signup() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-             <img src={logo} alt="Study Vault" className="h-12 w-auto" />
+            <Link to="/">
+              <span className="inline-block h-12">
+                <img src={logo} alt="Soma Vault" className="h-12 w-auto dark:hidden" />
+                <img src={logoDark} alt="Soma Vault" className="h-12 w-auto hidden dark:inline" />
+              </span>
+            </Link>
           </div>
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
           <CardDescription>
@@ -54,7 +60,7 @@ export default function Signup() {
               <Input 
                 id="school" 
                 type="text" 
-                placeholder="University of Study Vault" 
+                placeholder="University of Soma Vault" 
                 value={school}
                 onChange={(e) => setSchool(e.target.value)}
                 required 

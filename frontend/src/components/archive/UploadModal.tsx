@@ -45,7 +45,7 @@ export function UploadModal({
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="text-xl font-bold">Upload Material</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Add documents to the Study Vault 
+            Add documents to the Soma Vault 
           </DialogDescription>
         </DialogHeader>
         

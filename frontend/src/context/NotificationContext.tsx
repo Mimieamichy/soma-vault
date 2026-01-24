@@ -24,7 +24,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     // Sample notifications for demonstration
     {
       id: '1',
-      title: 'Welcome to Study Vault!',
+      title: 'Welcome to Soma Vault!',
       message: 'Get started by creating your first study session.',
       type: 'success',
       timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago

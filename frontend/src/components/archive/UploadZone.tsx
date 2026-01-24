@@ -109,7 +109,11 @@ export function UploadZone({ onFileSelect, multiple = true }: UploadZoneProps) {
             <FileUp className="h-6 w-6 text-accent" />
           </div>
           <h3 className="text-sm font-medium text-foreground mb-2">
-            Drag and drop your files here or <span className="text-accent underline decoration-accent/30 underline-offset-4 hover:decoration-accent">click to browse</span>
+            <span className="hidden sm:inline">Drag and drop your files here or </span>
+            <span className="text-accent underline decoration-accent/30 underline-offset-4 hover:decoration-accent sm:no-underline sm:text-accent">
+              <span className="sm:hidden">Select files</span>
+              <span className="hidden sm:inline">click to browse</span>
+            </span>
           </h3>
           
           <div className="flex items-center gap-2 mb-3">
