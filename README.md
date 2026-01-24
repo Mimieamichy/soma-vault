@@ -1,4 +1,4 @@
-# Study Vault
+# SomaVault
 
 A modern SaaS web application for students to organize study materials, create personalized study plans, and access AI-powered question answering from their documents.
 

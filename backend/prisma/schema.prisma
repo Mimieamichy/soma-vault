@@ -1,0 +1,197 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+}
+
+model User {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  email           String   @unique
+  password        String
+  name            String
+  plan            Plan     @default(FREE)
+  planExpiresAt   DateTime?
+  usageQuota      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  materials       Material[]
+  qaHistory       QAHistory[]
+  studyPlans      StudyPlan[]
+  studyProgress   StudyProgress[]
+  payments        Payment[]
+}
+
+model Material {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String        @db.ObjectId
+  title           String
+  type            MaterialType
+  fileUrl         String?
+  content         String
+  fileSize        Int?
+  archived        Boolean       @default(false)
+  tags            String[]      @default([])
+  uploadedAt      DateTime      @default(now())
+  lastAccessedAt  DateTime      @default(now())
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  qaHistory       QAHistoryMaterial[]
+  studyPlans      StudyPlan[]
+
+  @@index([userId, archived])
+  @@index([userId, uploadedAt])
+}
+
+model QAHistory {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  question   String
+  answer     String
+  tokensUsed Int?
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  materials  QAHistoryMaterial[]
+
+  @@index([userId, createdAt])
+}
+
+model QAHistoryMaterial {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  qaHistoryId  String   @db.ObjectId
+  materialId   String   @db.ObjectId
+
+  qaHistory    QAHistory @relation(fields: [qaHistoryId], references: [id], onDelete: Cascade)
+  material     Material  @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@unique([qaHistoryId, materialId])
+}
+
+model StudyPlan {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String          @db.ObjectId
+  materialId      String          @db.ObjectId
+  title           String
+  totalDays       Int
+  studyFrequency  StudyFrequency
+  startDate       DateTime
+  endDate         DateTime
+  status          PlanStatus      @default(ACTIVE)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  material        Material        @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  fragments       StudyFragment[]
+  progress        StudyProgress[]
+
+  @@index([userId, status])
+  @@index([userId, startDate])
+}
+
+model StudyFragment {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  studyPlanId     String        @db.ObjectId
+  fragmentNumber  Int
+  content         String
+  summary         String
+  scheduledDate   DateTime
+  createdAt       DateTime      @default(now())
+
+  studyPlan       StudyPlan     @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+  progress        StudyProgress[]
+  questions       Question[] 
+
+  @@index([studyPlanId, fragmentNumber])
+}
+
+model Question {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  fragmentId  String   @db.ObjectId
+  text        String
+  options     String[]
+  answer      String
+
+  fragment    StudyFragment @relation(fields: [fragmentId], references: [id], onDelete: Cascade)
+
+  @@index([fragmentId])
+}
+
+model StudyProgress {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String        @db.ObjectId
+  studyPlanId     String        @db.ObjectId
+  fragmentId      String        @db.ObjectId
+  completed       Boolean       @default(false)
+  completedAt     DateTime?
+  timeSpent       Int?
+  notes           String?
+  createdAt       DateTime      @default(now())
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studyPlan       StudyPlan     @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+  fragment        StudyFragment @relation(fields: [fragmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, fragmentId])
+  @@index([userId, studyPlanId])
+}
+
+model Payment {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String        @db.ObjectId
+  amount          Float
+  currency        String        @default("USD")
+  plan            Plan
+  status          PaymentStatus @default(PENDING)
+  paymentMethod   String?
+  transactionId   String?       @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+enum Plan {
+  FREE
+  PRO
+  PREMIUM
+}
+
+enum MaterialType {
+  PDF
+  DOC
+  DOCX
+  TXT
+  IMAGE
+  NOTE
+}
+
+enum StudyFrequency {
+  DAILY
+  WEEKLY
+  TWICE_WEEKLY
+  BIWEEKLY
+}
+
+enum PlanStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
