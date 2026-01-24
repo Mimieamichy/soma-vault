@@ -5,7 +5,6 @@ interface User {
   name: string;
   email: string;
   school?: string;
-  department?: string;
 }
 
 interface AuthContextType {
@@ -14,7 +13,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string) => void;
   logout: () => void;
-  signup: (email: string, name: string, school: string, department: string) => void;
+  signup: (email: string, name: string, school: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,9 +38,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('user', JSON.stringify(mockUser));
   };
 
-  const signup = (email: string, name: string, school: string, department: string) => {
+  const signup = (email: string, name: string, school: string) => {
     // Mock signup
-    const mockUser = { id: '1', name, email, school, department };
+    const mockUser = { id: '1', name, email, school };
     setUser(mockUser);
     localStorage.setItem('user', JSON.stringify(mockUser));
   };

@@ -12,15 +12,14 @@ export default function Signup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [school, setSchool] = useState('');
-  const [department, setDepartment] = useState('');
   const [password, setPassword] = useState('');
   const { signup } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && password && name && school && department) {
-      signup(email, name, school, department);
+    if (email && password && name && school) {
+      signup(email, name, school);
       navigate('/study-planner');
     }
   };
@@ -63,17 +62,6 @@ export default function Signup() {
                 placeholder="University of Soma Vault" 
                 value={school}
                 onChange={(e) => setSchool(e.target.value)}
-                required 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              <Input 
-                id="department" 
-                type="text" 
-                placeholder="e.g., Computer Science" 
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
                 required 
               />
             </div>

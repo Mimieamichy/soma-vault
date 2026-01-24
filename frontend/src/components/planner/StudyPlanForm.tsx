@@ -13,8 +13,31 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+const DEPARTMENTS = [
+  'Computer Science',
+  'Mechanical Engineering',
+  'Civil Engineering',
+  'Electrical Engineering',
+  'Chemistry',
+  'Geology',
+  'Physics',
+  'Mathematics',
+  'Microbiology',
+  'Biochemistry',
+  'Medicine',
+  'Pharmacy',
+  'Law',
+  'Economics',
+  'Accounting',
+  'Political Science',
+  'Mass Communication',
+  'Architecture',
+  'Theatre Arts',
+];
+
 interface StudyPlanFormProps {
   onSubmit: (data: {
+    department: string;
     courseName: string;
     level: string;
     frequency: string;
@@ -25,6 +48,7 @@ interface StudyPlanFormProps {
 
 export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
   const [courseName, setCourseName] = useState('');
+  const [department, setDepartment] = useState('');
   const [level, setLevel] = useState('');
   const [frequency, setFrequency] = useState('');
   const [duration, setDuration] = useState('');
@@ -37,8 +61,8 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (courseName && level && frequency && duration) {
-      onSubmit({ courseName, level, frequency, duration, files });
+    if (courseName && department && level && frequency && duration) {
+      onSubmit({ department, courseName, level, frequency, duration, files });
     }
   };
 
@@ -81,6 +105,22 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
         />
       </div>
 
+      <div className="space-y-2">
+        <Label>Department</Label>
+        <Select value={department} onValueChange={setDepartment}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select department" />
+          </SelectTrigger>
+          <SelectContent>
+            {DEPARTMENTS.map((dept) => (
+              <SelectItem key={dept} value={dept}>
+                {dept}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Level */}
       <div className="space-y-2">
         <Label>Academic Level</Label>
@@ -106,9 +146,9 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
             <SelectValue placeholder="Select frequency" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="hourly">Hourly Sessions</SelectItem>
             <SelectItem value="daily">Daily Sessions</SelectItem>
             <SelectItem value="weekly">Weekly Sessions</SelectItem>
+            <SelectItem value="bi-weekly">Bi-weekly Sessions</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -131,7 +171,7 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
       <Button 
         type="submit" 
         className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-        disabled={!courseName || !level || !frequency || !duration}
+        disabled={!courseName || !department || !level || !frequency || !duration}
       >
         Generate Study Plan
       </Button>

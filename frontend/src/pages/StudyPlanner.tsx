@@ -24,6 +24,7 @@ interface Fragment {
 
 interface StudyPlan {
   id: string;
+  department: string;
   courseName: string;
   level: string;
   frequency: string;
@@ -93,6 +94,7 @@ export default function StudyPlanner() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleCreatePlan = (data: { 
+    department: string;
     courseName: string; 
     level: string;
     frequency: string; 
