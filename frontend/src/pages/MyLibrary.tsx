@@ -15,6 +15,7 @@ export default function MyLibrary() {
   const [activeTab, setActiveTab] = useState('materials');
   const [uploadOpen, setUploadOpen] = useState(false);
   const [level, setLevel] = useState('');
+  const [department, setDepartment] = useState('');
   const [courseName, setCourseName] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,8 +30,8 @@ export default function MyLibrary() {
   );
 
   const handleLibrarySubmit = () => {
-    if (!level || !courseName || !selectedFile) {
-      toast.error('Please select level, enter course name, and choose a file.');
+    if (!level || !department || !courseName || !selectedFile) {
+      toast.error('Please select level, department, enter course name, and choose a file.');
       return;
     }
     const ext = selectedFile.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx';
@@ -50,6 +51,7 @@ export default function MyLibrary() {
     toast.success(`Uploaded to ${activeTab === 'materials' ? 'My Materials' : 'My Past Questions'}`);
     setUploadOpen(false);
     setLevel('');
+    setDepartment('');
     setCourseName('');
     setSelectedFile(null);
   };
@@ -96,6 +98,8 @@ export default function MyLibrary() {
           onSubmit={handleLibrarySubmit}
           level={level}
           setLevel={setLevel}
+          department={department}
+          setDepartment={setDepartment}
           courseName={courseName}
           setCourseName={setCourseName}
           onFileSelect={(files) => setSelectedFile(files[0] || null)}

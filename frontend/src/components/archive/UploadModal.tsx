@@ -18,12 +18,36 @@ import {
 } from '@/components/ui/select';
 import { UploadZone } from './UploadZone';
 
+const DEPARTMENTS = [
+  'Computer Science',
+  'Mechanical Engineering',
+  'Civil Engineering',
+  'Electrical Engineering',
+  'Chemistry',
+  'Geology',
+  'Physics',
+  'Mathematics',
+  'Microbiology',
+  'Biochemistry',
+  'Medicine',
+  'Pharmacy',
+  'Law',
+  'Economics',
+  'Accounting',
+  'Political Science',
+  'Mass Communication',
+  'Architecture',
+  'Theatre Arts',
+];
+
 interface UploadModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: () => void;
   level: string;
   setLevel: (val: string) => void;
+  department: string;
+  setDepartment: (val: string) => void;
   courseName: string;
   setCourseName: (val: string) => void;
   onFileSelect: (files: File[]) => void;
@@ -35,13 +59,15 @@ export function UploadModal({
   onSubmit,
   level,
   setLevel,
+  department,
+  setDepartment,
   courseName,
   setCourseName,
   onFileSelect,
 }: UploadModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[600px] p-0 gap-0 max-h-[85vh] overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="text-xl font-bold">Upload Material</DialogTitle>
           <DialogDescription className="text-muted-foreground">
@@ -49,8 +75,23 @@ export function UploadModal({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="px-6 pb-6 space-y-6">
-          <div className="grid grid-cols-2 gap-6 pt-4">
+        <div className="px-6 pb-6 space-y-6 overflow-y-auto max-h-[75vh]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
+            <div className="space-y-2">
+              <Label className="font-semibold text-foreground text-sm">Department</Label>
+              <Select value={department} onValueChange={setDepartment}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Select Department" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DEPARTMENTS.map((dept) => (
+                    <SelectItem key={dept} value={dept}>
+                      {dept}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label className="font-semibold text-foreground text-sm">Course Title</Label>
               <Input 
@@ -84,7 +125,7 @@ export function UploadModal({
 
           <div className="flex justify-end pt-2">
             <Button 
-              className="bg-accent hover:bg-accent/90 text-accent-foreground gap-2 px-6" 
+              className="bg-accent hover:bg-accent/90 text-accent-foreground m-6 gap-2 px-6" 
               onClick={onSubmit}
             >
               Upload <Zap className="h-4 w-4 fill-current" />

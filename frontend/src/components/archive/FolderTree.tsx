@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronRight, Folder, ArrowLeft, FileText, Image as ImageIcon, Eye, Download, Info } from 'lucide-react';
+import { Folder, ArrowLeft, FileText, Image as ImageIcon, Eye, Download, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MaterialItem } from '@/data/mockData';
 import {

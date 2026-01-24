@@ -18,9 +18,11 @@ export default function Archive() {
   const [materials, setMaterials] = useState(mockArchiveMaterials);
   const [pqMaterials, setPqMaterials] = useState(mockArchivePQs);
   const [materialsLevel, setMaterialsLevel] = useState('');
+  const [materialsDepartment, setMaterialsDepartment] = useState('');
   const [materialsCourseName, setMaterialsCourseName] = useState('');
   const [materialsFile, setMaterialsFile] = useState<File | null>(null);
   const [pqLevel, setPqLevel] = useState('');
+  const [pqDepartment, setPqDepartment] = useState('');
   const [pqCourseName, setPqCourseName] = useState('');
   const [pqFile, setPqFile] = useState<File | null>(null);
   const [materialsUploadOpen, setMaterialsUploadOpen] = useState(false);
@@ -36,8 +38,8 @@ export default function Archive() {
   );
 
   const handleMaterialsSubmit = () => {
-    if (!materialsLevel || !materialsCourseName || !materialsFile) {
-      toast.error('Please select level, enter course name, and choose a file.');
+    if (!materialsLevel || !materialsDepartment || !materialsCourseName || !materialsFile) {
+      toast.error('Please select level, department, enter course name, and choose a file.');
       return;
     }
     const ext = materialsFile.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx';
@@ -52,14 +54,15 @@ export default function Archive() {
     setMaterials([newMaterial, ...materials]);
     toast.success('Material uploaded successfully');
     setMaterialsLevel('');
+    setMaterialsDepartment('');
     setMaterialsCourseName('');
     setMaterialsFile(null);
     setMaterialsUploadOpen(false);
   };
 
   const handlePQSubmit = () => {
-    if (!pqLevel || !pqCourseName || !pqFile) {
-      toast.error('Please select level, enter course name, and choose a file.');
+    if (!pqLevel || !pqDepartment || !pqCourseName || !pqFile) {
+      toast.error('Please select level, department, enter course name, and choose a file.');
       return;
     }
     const ext = pqFile.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx';
@@ -74,6 +77,7 @@ export default function Archive() {
     setPqMaterials([newPQ, ...pqMaterials]);
     toast.success('Past question uploaded successfully');
     setPqLevel('');
+    setPqDepartment('');
     setPqCourseName('');
     setPqFile(null);
     setPqUploadOpen(false);
@@ -122,6 +126,8 @@ export default function Archive() {
               onSubmit={handleMaterialsSubmit}
               level={materialsLevel}
               setLevel={setMaterialsLevel}
+              department={materialsDepartment}
+              setDepartment={setMaterialsDepartment}
               courseName={materialsCourseName}
               setCourseName={setMaterialsCourseName}
               onFileSelect={(files) => setMaterialsFile(files[0] || null)}
@@ -178,6 +184,8 @@ export default function Archive() {
                   onSubmit={handlePQSubmit}
                   level={pqLevel}
                   setLevel={setPqLevel}
+                  department={pqDepartment}
+                  setDepartment={setPqDepartment}
                   courseName={pqCourseName}
                   setCourseName={setPqCourseName}
                   onFileSelect={(files) => setPqFile(files[0] || null)}
