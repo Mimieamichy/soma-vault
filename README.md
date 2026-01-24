@@ -1,4 +1,4 @@
-# Study Vault
+# Soma Vault
 
 A modern SaaS web application for students to organize study materials, create personalized study plans, and access AI-powered question answering from their documents.
 
@@ -22,7 +22,7 @@ npm run dev
 ## 📁 Project Structure
 
 ```
-study-vault/
+soma-vault/
 ├── src/
 │   ├── assets/           # Static assets (logo, images)
 │   ├── components/
@@ -46,3 +46,6 @@ study-vault/
 ## 🔧 Tech Stack
 
 React 18 + TypeScript | Vite | Tailwind CSS | Lucide Icons | React Router | Recharts | Shadcn/ui
+
+
+## 

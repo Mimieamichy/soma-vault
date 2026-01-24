@@ -2,19 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Study Vault Design System - Colors extracted from logo */
+/* Soma Vault Design System - Colors extracted from logo */
 @layer base {
   :root {
-    /* Primary - Navy Blue (#282e3b) */
-    --primary: 221 19% 19%;
-    --primary-foreground: 37 39% 95%;
+    /* Primary - Crimson Red (#dc2626) */
+    --primary: 0 72% 51%;
+    --primary-foreground: 0 0% 100%;
     
-    /* Secondary - Beige (#DFCFB6) */
-    --secondary: 37 39% 80%;
-    --secondary-foreground: 221 19% 19%;
+    /* Secondary - Navy Blue (#282e3b) - used for accents/dark backgrounds */
+    --secondary: 221 19% 19%;
+    --secondary-foreground: 37 39% 95%;
     
-    /* Accent - Crimson Red */
-    --accent: 0 70% 42%;
+    /* Accent - Light Red Tint or Yellow? Homepage uses Yellow as secondary accent */
+    /* Let's keep Accent as Red for consistency or maybe the Yellow from the homepage? */
+    /* Homepage uses Red for primary actions. */
+    --accent: 0 72% 51%;
     --accent-foreground: 0 0% 100%;
     
     /* Background - Light beige tint */
@@ -22,11 +24,11 @@
     --foreground: 221 19% 19%;
     
     /* Card */
-    --card: 37 39% 98%;
+    --card: 0 0% 100%;
     --card-foreground: 221 19% 19%;
     
     /* Popover */
-    --popover: 37 39% 98%;
+    --popover: 0 0% 100%;
     --popover-foreground: 221 19% 19%;
     
     /* Muted */
@@ -38,29 +40,31 @@
     --destructive-foreground: 0 0% 100%;
     
     /* Border & Input */
-    --border: 37 39% 85%;
-    --input: 37 39% 88%;
-    --ring: 221 19% 19%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 0 72% 51%;
     
     --radius: 0.75rem;
     
-    /* Sidebar */
+    /* Sidebar - keeping dark sidebar or matching brand? */
+    /* Homepage implies a light theme generally, but internal app might be different. */
+    /* Let's update sidebar to match Navy Blue branding */
     --sidebar-background: 221 19% 19%;
     --sidebar-foreground: 37 39% 95%;
-    --sidebar-primary: 37 39% 80%;
-    --sidebar-primary-foreground: 221 19% 19%;
+    --sidebar-primary: 0 72% 51%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 221 19% 25%;
     --sidebar-accent-foreground: 37 39% 95%;
     --sidebar-border: 221 19% 30%;
-    --sidebar-ring: 37 39% 80%;
+    --sidebar-ring: 0 72% 51%;
   }
 
   .dark {
-    --primary: 37 39% 80%;
-    --primary-foreground: 221 19% 19%;
+    --primary: 0 72% 51%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 221 19% 19%;
     --secondary-foreground: 37 39% 80%;
-    --accent: 0 70% 50%;
+    --accent: 0 72% 51%;
     --accent-foreground: 0 0% 100%;
     --background: 221 19% 12%;
     --foreground: 37 39% 95%;
@@ -74,15 +78,15 @@
     --destructive-foreground: 0 0% 100%;
     --border: 221 19% 25%;
     --input: 221 19% 25%;
-    --ring: 37 39% 80%;
+    --ring: 0 72% 51%;
     --sidebar-background: 221 19% 10%;
     --sidebar-foreground: 37 39% 95%;
-    --sidebar-primary: 37 39% 80%;
-    --sidebar-primary-foreground: 221 19% 19%;
+    --sidebar-primary: 0 72% 51%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 221 19% 18%;
     --sidebar-accent-foreground: 37 39% 95%;
     --sidebar-border: 221 19% 20%;
-    --sidebar-ring: 37 39% 80%;
+    --sidebar-ring: 0 72% 51%;
   }
 }
 
@@ -108,6 +112,16 @@
   
   .sidebar-transition {
     @apply transition-all duration-300 ease-in-out;
+  }
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s infinite;
   }
 }
 

@@ -1,18 +1,17 @@
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  LayoutDashboard, 
   Archive, 
   Library,
   CalendarDays, 
   User, 
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
+import logoDark from '@/assets/logo-darkmode.png';
 
 const navItems = [
-  { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { name: 'Study Planner', path: '/study-planner', icon: CalendarDays },
   { name: 'Archive', path: '/archive', icon: Archive },
   { name: 'My Library', path: '/library', icon: Library },
-  { name: 'Study Planner', path: '/study-planner', icon: CalendarDays },
   { name: 'Profile', path: '/profile', icon: User },
 ];
 
@@ -28,13 +27,20 @@ export function SidebarContent({ collapsed = false, onLinkClick }: SidebarConten
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-sidebar-border shrink-0">
-        <img 
-          src={logo} 
-          alt="Study Vault" 
-          className={`h-8 w-auto transition-all duration-300 ${collapsed ? 'mx-auto' : ''}`}
-        />
+        <span className={`inline-block h-10 ${collapsed ? 'mx-auto' : ''}`}>
+          <img 
+            src={logo} 
+            alt="Soma Vault" 
+            className="h-10 w-auto transition-all duration-300 dark:hidden"
+          />
+          <img 
+            src={logoDark} 
+            alt="Soma Vault" 
+            className="h-10 w-auto transition-all duration-300 hidden dark:inline"
+          />
+        </span>
         {!collapsed && (
-          <span className="ml-2 font-semibold text-lg animate-fade-in">Study Vault</span>
+          <span className="ml-2 font-semibold text-lg animate-fade-in">Soma Vault</span>
         )}
       </div>
 

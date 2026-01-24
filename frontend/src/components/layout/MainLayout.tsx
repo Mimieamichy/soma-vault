@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopNav } from './TopNav';
+import { BottomNav } from './BottomNav';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const pageTitles: Record<string, string> = {
-  '/dashboard': 'Dashboard',
   '/archive': 'Archive',
+  '/library': 'My Library',
   '/study-planner': 'Study Planner',
   '/profile': 'Profile',
 };
@@ -16,7 +17,7 @@ export function MainLayout() {
   const location = useLocation();
   const isMobile = useIsMobile();
   
-  const pageTitle = pageTitles[location.pathname] || 'Study Vault';
+  const pageTitle = pageTitles[location.pathname] || 'Soma Vault';
 
   return (
     <div className="min-h-screen bg-background">
@@ -28,7 +29,7 @@ export function MainLayout() {
       <div 
         className={`sidebar-transition ${
           isMobile 
-            ? 'ml-0' 
+            ? 'ml-0 pb-20' 
             : sidebarCollapsed ? 'ml-16' : 'ml-64'
         }`}
       >
@@ -37,6 +38,7 @@ export function MainLayout() {
           <Outlet />
         </main>
       </div>
+      <BottomNav />
     </div>
   );
 }
