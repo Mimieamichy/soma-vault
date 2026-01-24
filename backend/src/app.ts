@@ -19,8 +19,8 @@ import studyRouter from "../src/domain/studyplan/study.route"
 
 
 
-app.use("/auth", authRouter)
-app.use("/study", studyRouter)
+app.use("/api/v1/auth", authRouter)
+app.use("/api/v1/study", studyRouter)
 
 
 

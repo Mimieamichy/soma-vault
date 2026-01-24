@@ -1,14 +1,17 @@
 // services/auth.service.ts
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 
-const prisma = new PrismaClient();
+import prisma from '../../lib/prisma';
+
 
 interface RegisterInput {
   email: string;
   password: string;
   name: string;
+  role: UserRole;  
+  school?: string;
 }
 
 interface LoginInput {
@@ -22,17 +25,24 @@ interface AuthResponse {
     email: string;
     name: string | null;
     plan: string;
+    role: string;
+    school: string | null;
   };
   token: string;
 }
 
 interface TokenPayload {
   userId: string;
+  role: string;
 }
 
 class AuthService {
   async register(data: RegisterInput): Promise<AuthResponse> {
-    const { email, password, name } = data;
+    const { email, password, name, role, school } = data;
+
+    if (data.role === 'STUDENT' && !data.school) {
+      throw new Error('School is required for students');
+    }
 
     const existingUser = await prisma.user.findUnique({
       where: { email }
@@ -49,19 +59,23 @@ class AuthService {
         email,
         password: hashedPassword,
         name,
+        role,
+        school: school || null,
         plan: 'FREE',
         usageQuota: 10
       }
     });
 
-    const token = this.generateToken(user.id);
+    const token = this.generateToken(user.id, user.role);
 
     return {
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
-        plan: user.plan
+        plan: user.plan,
+        role: user.role,
+        school: user.school,
       },
       token
     };
@@ -84,14 +98,16 @@ class AuthService {
       throw new Error('Invalid credentials');
     }
 
-    const token = this.generateToken(user.id);
+    const token = this.generateToken(user.id, user.role);
 
     return {
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
-        plan: user.plan
+        plan: user.plan,
+        role: user.role,
+        school: user.school,
       },
       token
     };
@@ -105,6 +121,8 @@ class AuthService {
         email: true,
         name: true,
         plan: true,
+        school: true,
+        role: true,
         usageQuota: true,
         planExpiresAt: true,
         createdAt: true
@@ -118,9 +136,9 @@ class AuthService {
     return user;
   }
 
-  generateToken(userId: string): string {
+  generateToken(userId: string, role: string): string {
     return jwt.sign(
-      { userId },
+      { userId, role },
       process.env.JWT_SECRET as string,
       { expiresIn: '7d' }
     );

@@ -14,6 +14,8 @@ model User {
   email           String   @unique
   password        String
   name            String
+  role            UserRole @default(STUDENT)
+  school          String?
   plan            Plan     @default(FREE)
   planExpiresAt   DateTime?
   usageQuota      Int      @default(0)
@@ -158,6 +160,11 @@ model Payment {
 
   @@index([userId, createdAt])
   @@index([status])
+}
+
+enum UserRole {
+  ADMIN
+  STUDENT
 }
 
 enum Plan {

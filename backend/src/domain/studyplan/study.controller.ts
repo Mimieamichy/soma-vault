@@ -6,6 +6,7 @@ import { StudyFrequency, PlanStatus } from '@prisma/client';
 interface AuthRequest extends Request {
   user?: {
     userId: string;
+    role: string;
   };
 }
 

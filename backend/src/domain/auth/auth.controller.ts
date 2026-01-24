@@ -5,13 +5,14 @@ import authService from './auth.service';
 interface AuthRequest extends Request {
   user?: {
     userId: string;
+    role: string;
   };
 }
 
 class AuthController {
   async register(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password, name } = req.body;
+      const { email, password, name, school, role} = req.body;
 
       if (!email || !password) {
         res.status(400).json({ 
@@ -20,7 +21,7 @@ class AuthController {
         return;
       }
 
-      const result = await authService.register({ email, password, name });
+      const result = await authService.register({ email, password, name, role, school });
 
       res.status(201).json({
         success: true,
