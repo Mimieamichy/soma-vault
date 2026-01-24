@@ -1,6 +1,6 @@
 # Soma Vault
 
-A modern SaaS web application for students to organize study materials, create personalized study plans, and access AI-powered question answering from their documents.
+A modern study vault web app for organizing materials, managing past questions, and building study plans with a clean, mobile-first UI.
 
 ## 🎨 Brand Colors (Extracted from Logo)
 
@@ -12,7 +12,8 @@ A modern SaaS web application for students to organize study materials, create p
 ## 🚀 Getting Started
 
 ```bash
-# Install dependencies
+# Install dependencies (from /frontend)
+cd frontend
 npm install
 
 # Start development server
@@ -22,30 +23,39 @@ npm run dev
 ## 📁 Project Structure
 
 ```
-soma-vault/
-├── src/
-│   ├── assets/           # Static assets (logo, images)
-│   ├── components/
-│   │   ├── layout/       # Sidebar, TopNav, MainLayout
-│   │   ├── archive/      # FolderTree, MaterialCard, UploadZone, PQHub
-│   │   ├── planner/      # StudyPlanForm, FragmentCard
-│   │   └── ui/           # Shadcn UI components
-│   ├── pages/            # Dashboard, Archive, StudyPlanner, Profile
-│   └── main.tsx
-├── backend/              # Empty (placeholder for future backend)
-└── package.json
+study-vault/
+├── frontend/
+│   ├── src/
+│   │   ├── assets/           # Static assets (logo, images)
+│   │   ├── components/
+│   │   │   ├── archive/      # FolderTree, UploadModal, PQHub
+│   │   │   ├── layout/       # Sidebar, TopNav, MainLayout, BottomNav
+│   │   │   ├── profile/      # SubscriptionModal
+│   │   │   ├── planner/      # Study plan components
+│   │   │   └── ui/           # Shadcn UI components
+│   │   ├── pages/            # Dashboard, Archive, MyLibrary, StudyPlanner, Profile
+│   │   └── main.tsx
+│   └── package.json
+└── README.md
 ```
 
 ## 📱 Features
 
-- **Dashboard:** Stats overview, weekly progress chart, recent activity
-- **Archive:** Folder navigation, file uploads, PQ Hub AI Q&A
-- **Study Planner:** Create plans, timeline view, fragment editing
-- **Profile:** Settings, theme preview, subscription plans
+- **Archive:** Folder navigation, materials and past questions with uploads, mobile search, context actions
+- **My Library:** Personal materials and past questions with upload and search
+- **Study Planner:** Create and manage study plans
+- **Profile:** Theme toggle, account settings, subscription modal
 
 ## 🔧 Tech Stack
 
-React 18 + TypeScript | Vite | Tailwind CSS | Lucide Icons | React Router | Recharts | Shadcn/ui
+React 18 + TypeScript | Vite | Tailwind CSS | Radix UI / shadcn | Lucide Icons | React Router | Recharts
 
+## 🧪 Scripts
 
-## 
+```bash
+cd frontend
+npm run dev
+npm run build
+npm run lint
+npm run preview
+```
