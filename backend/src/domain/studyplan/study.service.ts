@@ -20,6 +20,17 @@ interface StudyFragmentData {
   scheduledDate: Date;
 }
 
+type StudyProgressItem = {
+  fragmentId: string;
+  completed: boolean;
+  completedAt: Date | null;
+  timeSpent: number | null;
+};
+
+type StudyFragmentItem = {
+  id: string;
+} & Record<string, unknown>;
+
 class StudyPlanService {
   async createStudyPlan(data: CreateStudyPlanInput) {
     const { userId, materialId, title, totalDays, studyFrequency, startDate } = data;
@@ -342,7 +353,7 @@ class StudyPlanService {
     }
 
     const totalFragments = studyPlan.fragments.length;
-    const completedFragments = studyPlan.progress.filter(p => p.completed).length;
+    const completedFragments = studyPlan.progress.filter((p: StudyProgressItem) => p.completed).length;
     const progressPercentage = (completedFragments / totalFragments) * 100;
 
     return {
@@ -354,8 +365,8 @@ class StudyPlanService {
       totalFragments,
       completedFragments,
       progressPercentage: Math.round(progressPercentage),
-      fragments: studyPlan.fragments.map(f => {
-        const progress = studyPlan.progress.find(p => p.fragmentId === f.id);
+      fragments: studyPlan.fragments.map((f: StudyFragmentItem) => {
+        const progress = studyPlan.progress.find((p: StudyProgressItem) => p.fragmentId === f.id);
         return {
           ...f,
           completed: progress?.completed || false,

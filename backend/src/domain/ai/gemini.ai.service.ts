@@ -1,8 +1,10 @@
 // services/ai.service.ts
-import { PrismaClient, StudyFragment} from '@prisma/client';
-import { GoogleGenAI  } from "@google/genai";
+import { StudyFragment } from '@prisma/client';
+import { GoogleGenAI } from "@google/genai";
+import prisma from "../../lib/prisma";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient(); // Removed: Use singleton instance
+
 
 const genAI = new GoogleGenAI({});
 

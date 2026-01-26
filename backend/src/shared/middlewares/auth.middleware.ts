@@ -1,10 +1,11 @@
 // middleware/auth.middleware.ts
 import { Request, Response, NextFunction } from 'express';
-import authService from '../../domain/auth/auth.service.js';
+import authService from '../../domain/auth/auth.service';
 
 interface AuthRequest extends Request {
   user?: {
     userId: string;
+    role: string;
   };
 }
 
