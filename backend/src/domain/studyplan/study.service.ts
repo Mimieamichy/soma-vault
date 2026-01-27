@@ -1,5 +1,7 @@
 // services/studyplan.service.ts
 import { StudyFrequency, PlanStatus } from '@prisma/client';
+import materialService from '../materials/materials.service';
+import geminiAiService from '../ai/gemini.ai.service';
 
 import prisma from '../../lib/prisma';
 
@@ -10,6 +12,8 @@ interface CreateStudyPlanInput {
   totalDays: number;
   studyFrequency: StudyFrequency;
   startDate: Date;
+  department?: string
+  file?: Express.Multer.File;
 }
 
 interface StudyFragmentData {
@@ -73,11 +77,56 @@ class StudyPlanService {
       studyPlan.id
     );
 
+    let processedFragments = [];
+      try {
+        processedFragments = await geminiAiService.processAllFragmentsForPlan(studyPlan.id);
+      } catch (error) {
+        console.error('AI processing error:', error);
+      }
+
+      const completeStudyPlan = await this.getStudyPlan(studyPlan.id, userId);
+
     return {
-      studyPlan,
-      fragments
+      completeStudyPlan,
+      fragments,
+      aiProcessed: processedFragments.length > 0
     };
   }
+
+
+    async createStudyPlanWithFileUpload(data: {
+      userId: string;
+      title: string;
+      totalDays: number;
+      studyFrequency: StudyFrequency;
+      startDate: Date;
+      file: Express.Multer.File;
+      department: string;
+    }) {
+      const { userId, title, totalDays, studyFrequency, startDate, file, department } = data;
+      if (!file) {
+        throw new Error('File is required for this operation');
+      }
+    // Upload and process the file
+    const uploadedMaterial = await materialService.uploadFile({
+      userId,
+      title: file.originalname,
+      file,
+      department
+    });
+
+    // Create study plan using the uploaded material
+    return await this.createStudyPlan({
+      userId,
+      materialId: uploadedMaterial.id,
+      title,
+      totalDays,
+      studyFrequency,
+      startDate
+    });
+  }
+
+
 
   async generateFragments(content: string,totalDays: number, frequency: StudyFrequency, startDate: Date, studyPlanId: string): Promise<StudyFragmentData[]> {
     // Calculate number of study sessions
@@ -110,7 +159,6 @@ class StudyPlanService {
         fragmentNumber: f.fragmentNumber,
         content: f.content,
         summary: f.summary,
-        questions: f.questions,
         scheduledDate: f.scheduledDate
       }))
     });

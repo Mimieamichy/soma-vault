@@ -16,11 +16,15 @@ app.use(morgan("dev"))
 //Routes
 import authRouter from "../src/domain/auth/auth.route"
 import studyRouter from "../src/domain/studyplan/study.route"
+import materialRouter from "../src/domain/materials/materials.route"
+
+
 
 
 
 app.use("/api/v1/auth", authRouter)
-app.use("/api/v1/study", studyRouter)
+app.use("/api/v1/studyPlan", studyRouter)
+app.use("/api/v1/materials", materialRouter)
 
 
 

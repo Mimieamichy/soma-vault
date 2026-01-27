@@ -139,7 +139,9 @@ class AIService {
     include: {
       studyPlan: {
         include: {
-          fragments: true
+          fragments: {
+            select: { id: true } // we only need the count
+          }
         }
       }
     }
@@ -149,7 +151,7 @@ class AIService {
     throw new Error('Fragment not found');
   }
 
-  // Generate summary and questions in parallel
+  // Generate summary & questions in parallel
   const [summary, questions] = await Promise.all([
     this.generateFragmentSummary({
       content: fragment.content,
@@ -159,13 +161,13 @@ class AIService {
     this.generateQuestions(fragment.content, 5)
   ]);
 
-  // Update fragment with AI-generated content (relational questions)
-  const updated = await prisma.studyFragment.update({
+  // Update fragment + relational questions
+  return await prisma.studyFragment.update({
     where: { id: fragmentId },
     data: {
       summary,
       questions: {
-        deleteMany: {}, // prevents duplicates on re-run
+        deleteMany: {}, // idempotent re-runs
         create: questions.map(q => ({
           text: q.question,
           options: q.options ?? [],
@@ -177,9 +179,8 @@ class AIService {
       questions: true
     }
   });
-
-  return updated;
 }
+
 
 
   async processAllFragmentsForPlan(studyPlanId: string) {
