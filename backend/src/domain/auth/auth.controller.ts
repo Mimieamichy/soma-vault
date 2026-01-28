@@ -30,7 +30,8 @@ class AuthController {
         data: result
       });
     } catch (error) {
-      res.status(400).json({
+       console.log(error);
+      res.status(400).json({ 
         success: false,
         error: error instanceof Error ? error.message : 'Registration failed'
       });

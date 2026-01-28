@@ -2,6 +2,7 @@
 import { StudyFrequency, PlanStatus } from '@prisma/client';
 import materialService from '../materials/materials.service';
 import geminiAiService from '../ai/gemini.ai.service';
+import { AppError } from "../../shared/middlewares/error.middleware";
 
 import prisma from '../../lib/prisma';
 
@@ -48,7 +49,7 @@ class StudyPlanService {
     });
 
     if (!material) {
-      throw new Error('Material not found');
+      throw new AppError('Material not found', 404);
     }
 
     // Calculate end date based on frequency
@@ -105,7 +106,7 @@ class StudyPlanService {
     }) {
       const { userId, title, totalDays, studyFrequency, startDate, file, department } = data;
       if (!file) {
-        throw new Error('File is required for this operation');
+        throw new AppError('File is required for this operation', 400);
       }
     // Upload and process the file
     const uploadedMaterial = await materialService.uploadFile({
@@ -251,7 +252,7 @@ class StudyPlanService {
     });
 
     if (!studyPlan) {
-      throw new Error('Study plan not found');
+      throw new AppError('Study plan not found', 404);
     }
 
     return studyPlan;
@@ -297,7 +298,7 @@ class StudyPlanService {
     });
 
     if (!studyPlan) {
-      throw new Error('Study plan not found');
+      throw new AppError('Study plan not found', 404);
     }
 
     return await prisma.studyPlan.update({
@@ -320,7 +321,7 @@ class StudyPlanService {
     });
 
     if (!fragment || fragment.studyPlan.userId !== userId) {
-      throw new Error('Fragment not found');
+      throw new AppError('Fragment not found', 404);
     }
 
     const progress = await prisma.studyProgress.upsert({
@@ -397,7 +398,7 @@ class StudyPlanService {
     });
 
     if (!studyPlan) {
-      throw new Error('Study plan not found');
+      throw new AppError('Study plan not found', 404);
     }
 
     const totalFragments = studyPlan.fragments.length;
@@ -434,7 +435,7 @@ class StudyPlanService {
     });
 
     if (!studyPlan) {
-      throw new Error('Study plan not found');
+      throw new AppError('Study plan not found', 404);
     }
 
     await prisma.studyPlan.delete({

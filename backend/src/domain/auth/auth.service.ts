@@ -2,6 +2,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { UserRole } from '@prisma/client';
+import { AppError } from "../../shared/middlewares/error.middleware";
 
 import prisma from '../../lib/prisma';
 
@@ -41,7 +42,7 @@ class AuthService {
     const { email, password, name, role, school } = data;
 
     if (data.role === 'STUDENT' && !data.school) {
-      throw new Error('School is required for students');
+      throw new AppError('School is required for students', 400);
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -49,7 +50,7 @@ class AuthService {
     });
 
     if (existingUser) {
-      throw new Error('Email already registered');
+      throw new AppError('Email already registered', 409);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -89,13 +90,13 @@ class AuthService {
     });
 
     if (!user) {
-      throw new Error('Invalid credentials');
+      throw new AppError('Invalid credentials', 401);
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
-      throw new Error('Invalid credentials');
+      throw new AppError('Invalid credentials', 401);
     }
 
     const token = this.generateToken(user.id, user.role);
@@ -130,7 +131,7 @@ class AuthService {
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new AppError('User not found', 404);
     }
 
     return user;
@@ -148,7 +149,7 @@ class AuthService {
     try {
       return jwt.verify(token, process.env.JWT_SECRET as string) as TokenPayload;
     } catch (error) {
-      throw new Error('Invalid token');
+      throw new AppError('Invalid token', 401);
     }
   }
 }
