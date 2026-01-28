@@ -36,7 +36,7 @@ export default function AdminSettings() {
   const renderContent = () => {
     const content = {
       'General': (
-        <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+        <div className="bg-card border border-border rounded-xl p-4 md:p-6 space-y-4">
           <h2 className="text-lg font-semibold">General Configuration</h2>
           <div className="flex items-center justify-between">
             <div>
@@ -62,7 +62,7 @@ export default function AdminSettings() {
         </div>
       ),
       'Security': (
-        <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+        <div className="bg-card border border-border rounded-xl p-4 md:p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Security Protocols</h2>
             <span className="text-xs text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">Enabled</span>
@@ -86,21 +86,21 @@ export default function AdminSettings() {
               className="flex-1 bg-muted/30 border border-border rounded-lg px-3 py-2 text-sm"
               placeholder="Add IP address"
             />
-            <Button variant="outline">Add</Button>
+            <Button variant="outline" size="sm">Add</Button>
           </div>
         </div>
       ),
       'Notifications': (
-        <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+        <div className="bg-card border border-border rounded-xl p-4 md:p-6 space-y-4">
           <h2 className="text-lg font-semibold">Notifications</h2>
           <p className="text-sm text-muted-foreground">Notification settings configuration goes here.</p>
         </div>
       ),
       'Roles & Permissions': (
-        <div className="bg-card border border-border rounded-xl p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Admin Roles & Permissions</h2>
-            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">Create Role</Button>
+        <div className="bg-card border border-border rounded-xl p-4 md:p-6 space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold truncate">Admin Roles & Permissions</h2>
+            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground shrink-0" size="sm">Create Role</Button>
           </div>
           <div className="grid grid-cols-3 text-xs text-muted-foreground uppercase tracking-wider border-b border-border pb-2">
             <div>Role</div>
@@ -137,7 +137,7 @@ export default function AdminSettings() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 xl:grid-cols-[240px_1fr] gap-4">
-        <div className="bg-card border border-border rounded-xl p-4 space-y-2 h-fit">
+        <div className="hidden xl:block bg-card border border-border rounded-xl p-4 space-y-2 h-fit">
           {SIDEBAR_ITEMS.map((item) => (
             <div
               key={item}

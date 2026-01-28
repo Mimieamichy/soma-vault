@@ -34,7 +34,7 @@ export default function AdminTransactions() {
         ))}
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-4">
+      <div className="bg-card border border-border rounded-xl p-4 md:p-6">
         <div className="overflow-x-auto">
           <div className="min-w-[860px]">
             <div className="grid grid-cols-6 text-xs text-muted-foreground uppercase tracking-wider pb-3 border-b border-border">

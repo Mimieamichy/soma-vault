@@ -8,14 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTheme } from '@/components/theme-provider';
 import { SubscriptionModal } from '@/components/profile/SubscriptionModal';
-
-const mockUser = {
-  name: 'John Doe',
-  email: 'john.doe@university.edu',
-  institution: 'State University',
-  major: 'Computer Science',
-  joinDate: 'January 2024',
-};
+import { useAuth } from '@/context/AuthContext';
 
 const subscriptionPlans = [
   {
@@ -44,6 +37,7 @@ export default function Profile() {
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
+  const { user } = useAuth();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -51,6 +45,15 @@ export default function Profile() {
       const url = URL.createObjectURL(file);
       setAvatar(url);
     }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
   };
 
   return (
@@ -64,18 +67,18 @@ export default function Profile() {
             <Avatar className="h-24 w-24">
               <AvatarImage src={avatar || ''} />
               <AvatarFallback className="bg-[#B91C1C] text-white text-3xl font-medium">
-                JD
+                {user?.name ? getInitials(user.name) : 'SV'}
               </AvatarFallback>
             </Avatar>
             
             <div className="flex-1 space-y-1">
-              <h3 className="text-2xl font-bold text-foreground">{mockUser.name}</h3>
-              <p className="text-muted-foreground">{mockUser.email}</p>
+              <h3 className="text-2xl font-bold text-foreground">{user?.name || 'Guest User'}</h3>
+              <p className="text-muted-foreground">{user?.email || 'No email'}</p>
               <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                 <GraduationCap className="h-4 w-4" />
-                <span>{mockUser.institution}</span>
+                <span>{user?.school || 'No School'}</span>
                 <span>•</span>
-                <span>{mockUser.major}</span>
+                <span>{user?.role || 'Student'}</span>
               </div>
             </div>
             
@@ -103,7 +106,7 @@ export default function Profile() {
                 <Avatar className="h-24 w-24 border-2 border-border group-hover:border-accent transition-colors">
                   <AvatarImage src={avatar || ''} />
                   <AvatarFallback className="bg-[#B91C1C] text-white text-3xl font-medium">
-                    JD
+                    {user?.name ? getInitials(user.name) : 'SV'}
                   </AvatarFallback>
                 </Avatar>
                 <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -123,15 +126,15 @@ export default function Profile() {
             <div className="space-y-4">
               <div className="grid gap-2">
                 <Label htmlFor="name">Full Name</Label>
-                <Input id="name" defaultValue={mockUser.name} />
+                <Input id="name" defaultValue={user?.name || ''} />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" defaultValue={mockUser.email} />
+                <Input id="email" type="email" defaultValue={user?.email || ''} disabled />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="••••••••" />
+                <Label htmlFor="school">School</Label>
+                <Input id="school" defaultValue={user?.school || ''} />
               </div>
               <div className="flex justify-end pt-2">
                 <Button onClick={() => setIsEditing(false)}>Save Changes</Button>
