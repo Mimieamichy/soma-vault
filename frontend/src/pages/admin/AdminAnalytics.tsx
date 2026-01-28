@@ -94,7 +94,7 @@ export default function AdminAnalytics() {
           </ChartContainer>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6">
+        <div className="bg-card border border-border rounded-xl p-4 md:p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Asset Distribution</h2>
             <div className="text-xs text-muted-foreground">By department</div>

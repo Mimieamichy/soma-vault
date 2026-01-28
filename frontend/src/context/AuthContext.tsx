@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { api } from '@/lib/api';
 
 interface User {
   id: string;
@@ -11,9 +12,9 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string) => void;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  signup: (email: string, name: string, school: string) => void;
+  signup: (email: string, name: string, school: string, password: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,30 +24,73 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check local storage on mount
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    checkAuth();
   }, []);
 
-  const login = (email: string) => {
-    // Mock login - in a real app, verify credentials here
-    const mockUser = { id: '1', name: email.split('@')[0], email };
-    setUser(mockUser);
-    localStorage.setItem('user', JSON.stringify(mockUser));
+  const checkAuth = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await api.get('/auth/profile');
+      // Profile endpoint returns { success: true, data: user }
+      if (response.data.success) {
+        setUser(response.data.data);
+      } else {
+        localStorage.removeItem('token');
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      localStorage.removeItem('token');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const signup = (email: string, name: string, school: string) => {
-    // Mock signup
-    const mockUser = { id: '1', name, email, school };
-    setUser(mockUser);
-    localStorage.setItem('user', JSON.stringify(mockUser));
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      // Login endpoint returns { success: true, data: { user, token } }
+      if (response.data.success) {
+        const { user, token } = response.data.data;
+        localStorage.setItem('token', token);
+        // Also store user in local storage for persistence if needed, but context state is better
+        localStorage.setItem('user', JSON.stringify(user));
+        setUser(user);
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
+    }
+  };
+
+  const signup = async (email: string, name: string, school: string, password: string) => {
+    try {
+      const response = await api.post('/auth/register', { 
+        email, 
+        password, 
+        name, 
+        school
+      });
+      // Register endpoint returns { success: true, data: { user, token } }
+      if (response.data.success) {
+        const { user, token } = response.data.data;
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        setUser(user);
+      }
+    } catch (error) {
+      console.error('Signup failed:', error);
+      throw error;
+    }
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
   };
 

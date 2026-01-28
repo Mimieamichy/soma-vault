@@ -21,7 +21,7 @@ export default function AdminUsers() {
         <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">Export CSV</Button>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-4">
+      <div className="bg-card border border-border rounded-xl p-4 md:p-6">
         <div className="overflow-x-auto">
           <div className="min-w-[720px]">
             <div className="grid grid-cols-5 text-xs text-muted-foreground uppercase tracking-wider pb-3 border-b border-border">
