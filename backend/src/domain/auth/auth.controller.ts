@@ -12,7 +12,7 @@ interface AuthRequest extends Request {
 class AuthController {
   async register(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password, name, role, school} = req.body;
+      const { email, password, name, school} = req.body;
 
       if (!email || !password) {
         res.status(400).json({ 
@@ -20,6 +20,8 @@ class AuthController {
         });
         return;
       }
+
+      const role =  'STUDENT';
 
       const result = await authService.register({ email, password, name, role, school });
 
