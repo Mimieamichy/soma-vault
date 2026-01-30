@@ -40,7 +40,10 @@ model Material {
   content         String
   fileSize        Int?
   archived        Boolean       @default(false)
-  department      String        
+  department      String   
+  school          String
+  level           String    
+  materialType    String 
   uploadedAt      DateTime      @default(now())
   lastAccessedAt  DateTime      @default(now())
 

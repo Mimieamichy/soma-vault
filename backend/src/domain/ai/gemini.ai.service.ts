@@ -133,53 +133,53 @@ class AIService {
     return questions.slice(0, count);
   }
 
- async processFragmentWithAI(fragmentId: string) {
-  const fragment = await prisma.studyFragment.findUnique({
-    where: { id: fragmentId },
-    include: {
-      studyPlan: {
-        include: {
-          fragments: {
-            select: { id: true } // we only need the count
+  async processFragmentWithAI(fragmentId: string) {
+    const fragment = await prisma.studyFragment.findUnique({
+      where: { id: fragmentId },
+      include: {
+        studyPlan: {
+          include: {
+            fragments: {
+              select: { id: true } // we only need the count
+            }
           }
         }
       }
+    });
+
+    if (!fragment) {
+      throw new Error('Fragment not found');
     }
-  });
 
-  if (!fragment) {
-    throw new Error('Fragment not found');
-  }
+    // Generate summary & questions in parallel
+    const [summary, questions] = await Promise.all([
+      this.generateFragmentSummary({
+        content: fragment.content,
+        fragmentNumber: fragment.fragmentNumber,
+        totalFragments: fragment.studyPlan.fragments.length
+      }),
+      this.generateQuestions(fragment.content, 5)
+    ]);
 
-  // Generate summary & questions in parallel
-  const [summary, questions] = await Promise.all([
-    this.generateFragmentSummary({
-      content: fragment.content,
-      fragmentNumber: fragment.fragmentNumber,
-      totalFragments: fragment.studyPlan.fragments.length
-    }),
-    this.generateQuestions(fragment.content, 5)
-  ]);
-
-  // Update fragment + relational questions
-  return await prisma.studyFragment.update({
-    where: { id: fragmentId },
-    data: {
-      summary,
-      questions: {
-        deleteMany: {}, // idempotent re-runs
-        create: questions.map(q => ({
-          text: q.question,
-          options: q.options ?? [],
-          answer: q.correctAnswer ?? ""
-        }))
+    // Update fragment + relational questions
+    return await prisma.studyFragment.update({
+      where: { id: fragmentId },
+      data: {
+        summary,
+        questions: {
+          deleteMany: {}, // idempotent re-runs
+          create: questions.map(q => ({
+            text: q.question,
+            options: q.options ?? [],
+            answer: q.correctAnswer ?? ""
+          }))
+        }
+      },
+      include: {
+        questions: true
       }
-    },
-    include: {
-      questions: true
-    }
-  });
-}
+    });
+  }
 
 
 

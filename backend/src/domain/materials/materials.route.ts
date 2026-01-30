@@ -52,6 +52,13 @@ materialRouter.get('/search', (req, res) => materialController.searchMaterials(r
 
 // Get specific material
 materialRouter.get('/:id', (req, res) => materialController.getMaterial(req, res));
+materialRouter.get('/:departmentName', (req, res) => materialController.getMaterialsByDepartmentName(req, res));
+materialRouter.get('/:levelName', (req, res) => materialController.getMaterialsByLevelName(req, res));
+materialRouter.get('/:materialType', (req, res) => materialController.getMaterialsByMaterialType(req, res));
+materialRouter.get('/:schoolName', (req, res) => materialController.getMaterialsBySchoolName(req, res));
+
+// Get all materials 
+materialRouter.get('/all', (req, res) => materialController.getAllMaterials(req, res));
 
 // Update material
 materialRouter.patch('/:id', (req, res) => materialController.updateMaterial(req, res));

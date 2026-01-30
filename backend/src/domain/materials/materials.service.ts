@@ -11,6 +11,9 @@ interface CreateMaterialInput {
   content: string;
   fileSize?: number;
   department: string;
+  level: string;
+  school: string;
+  materialType: string;
 }
 
 interface UploadFileInput {
@@ -18,11 +21,28 @@ interface UploadFileInput {
   title: string;
   file: Express.Multer.File;
   department: string;
+  level: string;
+  materialType: string;
+}
+
+interface GetAllMaterialsInput {
+  page?: number;
+  limit?: number;
+  department?: string;
+  level?: string;
+  archived?: boolean;
+  sortBy?: 'uploadedAt' | 'title' | 'lastAccessedAt';
+  sortOrder?: 'asc' | 'desc';
 }
 
 class MaterialService {
   async createMaterial(data: CreateMaterialInput) {
-    const { userId, title, type, fileUrl, content, fileSize, department } = data;
+    const { userId, title, type, fileUrl, content, fileSize, department, level, materialType } = data;
+
+    const school = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { school: true }
+    });
 
     const material = await prisma.material.create({
       data: {
@@ -33,7 +53,10 @@ class MaterialService {
         content,
         fileSize: fileSize || null,
         department: department,
-        archived: false
+        archived: false,
+        level: level,
+        school: school?.school || '',
+        materialType
       }
     });
 
@@ -41,7 +64,7 @@ class MaterialService {
   }
 
   async uploadFile(data: UploadFileInput) {
-    const { userId, title, file, department } = data;
+    const { userId, title, file, department, level, materialType } = data;
 
     let content = '';
     let type: MaterialType;
@@ -72,6 +95,10 @@ class MaterialService {
       throw new Error('Unsupported file type');
     }
 
+    const school = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { school: true }
+    });
     // Create material
     const material = await this.createMaterial({
       userId,
@@ -79,20 +106,29 @@ class MaterialService {
       type,
       content,
       fileSize: file.size,
-      department: department
+      department: department,
+      level: level,
+      school: school?.school || '',
+      materialType: materialType,
     });
 
     return material;
   }
 
-  async createTextNote(userId: string, title: string, content: string, department: string) {
+  async createTextNote(userId: string, title: string, content: string, department: string, level: string, materialType: string) {
     return await this.createMaterial({
       userId,
       title: title || 'Untitled Note',
       type: MaterialType.NOTE,
       content,
       fileSize: content.length,
-      department: department
+      department: department,
+      level: level,
+      school: (await prisma.user.findUnique({
+        where: { id: userId },
+        select: { school: true }
+      }))?.school || '',
+      materialType
     });
   }
 
@@ -117,16 +153,16 @@ class MaterialService {
     return material;
   }
 
-  async getUserMaterials(userId: string, archived?: boolean, tags?: string[]) {
+  async getUserMaterials(userId: string, department: string, archived?: boolean) {
     const where: any = { userId };
 
     if (typeof archived === 'boolean') {
       where.archived = archived;
     }
 
-    if (tags && tags.length > 0) {
-      where.tags = {
-        hasSome: tags
+    if (department && department.length > 0) {
+      where.department = {
+        hasSome: department
       };
     }
 
@@ -157,10 +193,144 @@ class MaterialService {
     return materials;
   }
 
+  async getAllMaterials(filters: GetAllMaterialsInput) {
+    const { page = 1, limit = 20, department, level, archived, sortBy = 'uploadedAt', sortOrder = 'desc' } = filters;
+
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+
+    if (department) {
+      where.department = department;
+    }
+
+    if (level) {
+      where.level = level;
+    }
+
+    if (typeof archived === 'boolean') {
+      where.archived = archived;
+    }
+
+    const [materials, total] = await Promise.all([
+      prisma.material.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: {
+          [sortBy]: sortOrder
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              school: true
+            }
+          },
+          _count: {
+            select: {
+              studyPlans: true,
+              qaHistory: true
+            }
+          }
+        }
+      }),
+      prisma.material.count({ where })
+    ]);
+
+    return {
+      materials,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasMore: skip + materials.length < total
+      }
+    };
+  }
+
+  async getMaterialsByDepartmentName(departmentName: string) {
+    const [materials, totalCount] = await prisma.$transaction([
+      prisma.material.findMany({
+        where: { department: departmentName },
+        orderBy: { uploadedAt: 'desc' }
+      }),
+      prisma.material.count({
+        where: { department: departmentName }
+      })
+    ]);
+
+    return {
+      department: departmentName,
+      count: totalCount,
+      materials: materials
+    };
+  }
+
+  async getMaterialsBySchoolName(schoolName: string) {
+    const [materials, totalCount] = await prisma.$transaction([
+      prisma.material.findMany({
+        where: { school: schoolName },
+        orderBy: { uploadedAt: 'desc' }
+      }),
+      prisma.material.count({
+        where: { school: schoolName }
+      })
+    ]);
+
+    return {
+      school: schoolName,
+      count: totalCount,
+      materials: materials
+    };
+  }
+
+  async getMaterialsByLevelName(levelName: string) {
+    const [materials, totalCount] = await prisma.$transaction([
+      prisma.material.findMany({
+        where: { level: levelName },
+        orderBy: { uploadedAt: 'desc' }
+      }),
+      prisma.material.count({
+        where: { level: levelName }
+      })
+    ]);
+
+    return {
+      level: levelName,
+      count: totalCount,
+      materials: materials
+    };
+  }
+
+
+  async getMaterialsByMaterialType(MaterialType: string) {
+    const [materials, totalCount] = await prisma.$transaction([
+      prisma.material.findMany({
+        where: { materialType: MaterialType },
+        orderBy: { uploadedAt: 'desc' }
+      }),
+      prisma.material.count({
+        where: { materialType: MaterialType }
+      })
+    ]);
+
+    return {
+      materialType: MaterialType,
+      count: totalCount,
+      materials: materials
+    };
+  }
+
+
+
   async updateMaterial(materialId: string, userId: string, data: {
     title?: string;
     content?: string;
-    tags?: string[];
+    department?: string;
     archived?: boolean;
   }) {
     const material = await prisma.material.findFirst({
