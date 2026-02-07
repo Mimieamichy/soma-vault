@@ -167,6 +167,34 @@ model Payment {
   @@index([status])
 }
 
+
+
+model Institution {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  type        InstitutionType @default(UNIVERSITY)
+  category    String   // e.g., "Federal", "State", "Private"
+  
+  description String?
+  
+  courses     Course[] @relation(fields: [courseIds], references: [id])
+  courseIds   String[] @db.ObjectId
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+
+model Course {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  title         String        @unique
+  faculty       String?       
+  institutions   Institution[] @relation(fields: [institutionIds], references: [id])
+  institutionIds String[]      @db.ObjectId
+  
+  createdAt     DateTime      @default(now())
+}
+
 enum UserRole {
   ADMIN
   STUDENT
@@ -206,4 +234,13 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
+}
+
+
+
+enum InstitutionType {
+  UNIVERSITY            
+  POLYTECHNIC           
+  COLLEGE_OF_EDUCATION  
+  IEI                   
 }
