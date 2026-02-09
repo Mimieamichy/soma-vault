@@ -13,7 +13,7 @@ interface AuthRequest extends Request {
 class StudyPlanController {
   async createStudyPlan(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { materialId, title, totalDays, studyFrequency, startDate } = req.body;
+      const { materialId, title, totalDays, studyFrequency, startDate} = req.body;
 
       if (!materialId || !title || !totalDays || !studyFrequency) {
         res.status(400).json({
@@ -56,7 +56,7 @@ class StudyPlanController {
         return;
       }
 
-      const { title, totalDays, studyFrequency, startDate, department } = req.body;
+      const { title, totalDays, studyFrequency, startDate, department, level, materialType } = req.body;
 
       if (!title || !totalDays || !studyFrequency) {
         res.status(400).json({
@@ -78,7 +78,9 @@ class StudyPlanController {
       studyFrequency: studyFrequency as StudyFrequency,
       startDate: startDate ? new Date(startDate) : new Date(),
       file: req.file,
-      department: department
+      department: department,
+      level: level,
+      materialType: materialType
     });
 
       res.status(201).json({

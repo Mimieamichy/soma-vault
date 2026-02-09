@@ -12,6 +12,10 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"))
 
+import { setupSwagger } from '../src/domain/docs/swagger';
+
+setupSwagger(app);
+
 
 //Routes
 import authRouter from "../src/domain/auth/auth.route"

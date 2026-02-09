@@ -37,3 +37,19 @@ export const authenticate = async (
     });
   }
 };
+
+
+export const authorizeAdmin = (
+  req: AuthRequest, 
+  res: Response,  
+  next: NextFunction
+): void => {
+  if (req.user?.role !== 'ADMIN') { 
+    res.status(403).json({
+      success: false,
+      error: 'Forbidden: Admins only'
+    });
+    return;
+  }
+  next();
+}

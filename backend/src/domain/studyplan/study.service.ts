@@ -15,6 +15,8 @@ interface CreateStudyPlanInput {
   startDate: Date;
   department?: string
   file?: Express.Multer.File;
+  level?: string;
+  materialType?: string;
 }
 
 interface StudyFragmentData {
@@ -95,7 +97,7 @@ class StudyPlanService {
   }
 
 
-    async createStudyPlanWithFileUpload(data: {
+  async createStudyPlanWithFileUpload(data: {
       userId: string;
       title: string;
       totalDays: number;
@@ -103,8 +105,10 @@ class StudyPlanService {
       startDate: Date;
       file: Express.Multer.File;
       department: string;
+      level: '100' | '200' | '300' | '400' | '500';
+      materialType: 'NOTE' | 'PQ';
     }) {
-      const { userId, title, totalDays, studyFrequency, startDate, file, department } = data;
+      const { userId, title, totalDays, studyFrequency, startDate, file, department, level, materialType } = data;
       if (!file) {
         throw new AppError('File is required for this operation', 400);
       }
@@ -113,7 +117,9 @@ class StudyPlanService {
       userId,
       title: file.originalname,
       file,
-      department
+      department,
+      level,
+      materialType
     });
 
     // Create study plan using the uploaded material
@@ -167,62 +173,7 @@ class StudyPlanService {
     return fragments;
   }
 
-  splitContent(content: string, parts: number): string[] {
-    const words = content.split(/\s+/).filter(word => word.length > 0);
-    const wordsPerPart = Math.ceil(words.length / parts);
-    const fragments: string[] = [];
-
-    for (let i = 0; i < parts; i++) {
-      const start = i * wordsPerPart;
-      const end = start + wordsPerPart;
-      const fragment = words.slice(start, end).join(' ');
-      fragments.push(fragment);
-    }
-
-    return fragments.filter(f => f.length > 0);
-  }
-
-  calculateSessions(totalDays: number, frequency: StudyFrequency): number {
-    switch (frequency) {
-      case StudyFrequency.DAILY:
-        return totalDays;
-      case StudyFrequency.TWICE_WEEKLY:
-        return Math.ceil((totalDays / 7) * 2);
-      case StudyFrequency.WEEKLY:
-        return Math.ceil(totalDays / 7);
-      case StudyFrequency.BIWEEKLY:
-        return Math.ceil(totalDays / 14);
-      default:
-        return totalDays;
-    }
-  }
-
-  calculateEndDate(startDate: Date, totalDays: number, frequency: StudyFrequency): Date {
-    const end = new Date(startDate);
-    end.setDate(end.getDate() + totalDays);
-    return end;
-  }
-
-  calculateScheduledDate(startDate: Date, sessionIndex: number, frequency: StudyFrequency): Date {
-    const date = new Date(startDate);
-
-    switch (frequency) {
-      case StudyFrequency.DAILY:
-        date.setDate(date.getDate() + sessionIndex);
-        break;
-      case StudyFrequency.TWICE_WEEKLY:
-        date.setDate(date.getDate() + (Math.floor(sessionIndex / 2) * 7) + ((sessionIndex % 2) * 3));
-        break;
-      case StudyFrequency.WEEKLY:
-        date.setDate(date.getDate() + (sessionIndex * 7));
-        break;
-      case StudyFrequency.BIWEEKLY:
-        date.setDate(date.getDate() + (sessionIndex * 14));
-        break;
-    }
-
-    return date;
-  }
+ 
 
   async getStudyPlan(studyPlanId: string, userId: string) {
     const studyPlan = await prisma.studyPlan.findFirst({
@@ -443,6 +394,64 @@ class StudyPlanService {
     });
 
     return { message: 'Study plan deleted successfully' };
+  }
+
+
+  splitContent(content: string, parts: number): string[] {
+    const words = content.split(/\s+/).filter(word => word.length > 0);
+    const wordsPerPart = Math.ceil(words.length / parts);
+    const fragments: string[] = [];
+
+    for (let i = 0; i < parts; i++) {
+      const start = i * wordsPerPart;
+      const end = start + wordsPerPart;
+      const fragment = words.slice(start, end).join(' ');
+      fragments.push(fragment);
+    }
+
+    return fragments.filter(f => f.length > 0);
+  }
+
+  calculateSessions(totalDays: number, frequency: StudyFrequency): number {
+    switch (frequency) {
+      case StudyFrequency.DAILY:
+        return totalDays;
+      case StudyFrequency.TWICE_WEEKLY:
+        return Math.ceil((totalDays / 7) * 2);
+      case StudyFrequency.WEEKLY:
+        return Math.ceil(totalDays / 7);
+      case StudyFrequency.BIWEEKLY:
+        return Math.ceil(totalDays / 14);
+      default:
+        return totalDays;
+    }
+  }
+
+  calculateEndDate(startDate: Date, totalDays: number, frequency: StudyFrequency): Date {
+    const end = new Date(startDate);
+    end.setDate(end.getDate() + totalDays);
+    return end;
+  }
+
+  calculateScheduledDate(startDate: Date, sessionIndex: number, frequency: StudyFrequency): Date {
+    const date = new Date(startDate);
+
+    switch (frequency) {
+      case StudyFrequency.DAILY:
+        date.setDate(date.getDate() + sessionIndex);
+        break;
+      case StudyFrequency.TWICE_WEEKLY:
+        date.setDate(date.getDate() + (Math.floor(sessionIndex / 2) * 7) + ((sessionIndex % 2) * 3));
+        break;
+      case StudyFrequency.WEEKLY:
+        date.setDate(date.getDate() + (sessionIndex * 7));
+        break;
+      case StudyFrequency.BIWEEKLY:
+        date.setDate(date.getDate() + (sessionIndex * 14));
+        break;
+    }
+
+    return date;
   }
 }
 

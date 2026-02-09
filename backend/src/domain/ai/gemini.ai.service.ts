@@ -307,11 +307,8 @@ class AIService {
     }
   }
 
-  async analyzeMaterialDifficulty(content: string): Promise<{
-    level: 'beginner' | 'intermediate' | 'advanced';
-    estimatedStudyTime: number; // in hours
-    topicComplexity: string;
-  }> {
+  async analyzeMaterialDifficulty(content: string): Promise<{level: 'beginner' | 'intermediate' | 'advanced';
+    estimatedStudyTime: number; topicComplexity: string}> {
     const prompt = `Analyze this study material and provide a difficulty assessment.
 
     Content:
