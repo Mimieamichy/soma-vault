@@ -63,7 +63,6 @@ class AuthService {
         role,
         school: school || null,
         plan: 'FREE',
-        usageQuota: 10
       }
     });
 
