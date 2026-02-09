@@ -123,7 +123,6 @@ class AuthService {
         plan: true,
         school: true,
         role: true,
-        usageQuota: true,
         planExpiresAt: true,
         createdAt: true
       }

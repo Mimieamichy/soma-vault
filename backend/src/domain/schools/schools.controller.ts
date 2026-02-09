@@ -41,6 +41,19 @@ class EducationController {
       res.status(500).json({success: false, message: 'Failed to fetch courses'});
     }
   }
+
+
+    async getCourseGroups(req: Request, res: Response) {
+    try {
+
+      const data = educationService.getCourseGroups();
+
+      res.status(200).json({success: true, data});
+    } catch (error) {
+      console.error('Error fetching course groups:', error);
+      res.status(500).json({success: false, message: 'Failed to fetch course groups'});
+    }
+  }
 }
 
 export default new EducationController();

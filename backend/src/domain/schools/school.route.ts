@@ -11,4 +11,8 @@ schoolRouter.get('/courses', (req, res) =>
   schoolController.getCourses(req, res)
 );
 
+schoolRouter.get('/course-groups', (req, res) =>
+  schoolController.getCourseGroups(req, res)
+);
+
 export default schoolRouter;

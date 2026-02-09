@@ -40,6 +40,20 @@ class EducationService {
       length: selected.length
     };
   }
+
+
+  getCourseGroups() {
+    const selected = Object.keys(courses);
+
+    if (!selected) {
+      return {};
+    } 
+
+    return {
+      courses: selected,
+      length: selected.length
+    };
+  }
 }
 
 export default new EducationService();
