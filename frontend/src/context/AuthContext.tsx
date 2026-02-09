@@ -69,12 +69,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (email: string, name: string, school: string, password: string) => {
     try {
-      const response = await api.post('/auth/register', { 
+      const payload = { 
         email, 
         password, 
         name, 
         school
-      });
+      };
+      console.log('Signup payload:', payload);
+      const response = await api.post('/auth/register', payload);
       // Register endpoint returns { success: true, data: { user, token } }
       if (response.data.success) {
         const { user, token } = response.data.data;

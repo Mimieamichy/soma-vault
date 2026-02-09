@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { MaterialCard } from '@/components/archive/MaterialCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { UploadModal } from '@/components/archive/UploadModal';
+import { UploadModal, UploadType } from '@/components/archive/UploadModal';
 import { mockLibraryMaterials, mockLibraryPQs } from '@/data/mockData';
 
 export default function MyLibrary() {
@@ -18,6 +18,7 @@ export default function MyLibrary() {
   const [department, setDepartment] = useState('');
   const [courseName, setCourseName] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadType, setUploadType] = useState<UploadType>('materials');
   const [searchTerm, setSearchTerm] = useState('');
 
 
@@ -41,14 +42,15 @@ export default function MyLibrary() {
       type: ext as 'pdf' | 'docx',
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       size: `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`,
+      category: uploadType
     };
 
-    if (activeTab === 'materials') {
+    if (uploadType === 'materials') {
       setMaterials([newItem, ...materials]);
     } else {
       setPQs([newItem, ...pqs]);
     }
-    toast.success(`Uploaded to ${activeTab === 'materials' ? 'My Materials' : 'My Past Questions'}`);
+    toast.success(`Uploaded to ${uploadType === 'materials' ? 'My Materials' : 'My Past Questions'}`);
     setUploadOpen(false);
     setLevel('');
     setDepartment('');
@@ -80,14 +82,20 @@ export default function MyLibrary() {
         </div>
         <Button 
           className="hidden md:flex gap-2 bg-accent hover:bg-accent/90 text-accent-foreground whitespace-nowrap"
-          onClick={() => setUploadOpen(true)}
+          onClick={() => {
+            setUploadOpen(true);
+            setUploadType(activeTab as UploadType);
+          }}
         >
           <Upload className="h-4 w-4" />
           Upload New
         </Button>
         <Button
           className="md:hidden fixed bottom-24 right-6 z-50 shadow-lg bg-accent hover:bg-accent/90 text-accent-foreground"
-          onClick={() => setUploadOpen(true)}
+          onClick={() => {
+            setUploadOpen(true);
+            setUploadType(activeTab as UploadType);
+          }}
         >
           <Upload className="h-4 w-4 mr-2" />
           Upload
@@ -102,6 +110,8 @@ export default function MyLibrary() {
           setDepartment={setDepartment}
           courseName={courseName}
           setCourseName={setCourseName}
+          uploadType={uploadType}
+          setUploadType={setUploadType}
           onFileSelect={(files) => setSelectedFile(files[0] || null)}
         />
       </div>

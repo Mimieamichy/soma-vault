@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { Zap } from 'lucide-react';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -7,8 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -40,6 +42,8 @@ const DEPARTMENTS = [
   'Theatre Arts',
 ];
 
+export type UploadType = 'materials' | 'pq';
+
 interface UploadModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -50,6 +54,8 @@ interface UploadModalProps {
   setDepartment: (val: string) => void;
   courseName: string;
   setCourseName: (val: string) => void;
+  uploadType: UploadType;
+  setUploadType: (val: UploadType) => void;
   onFileSelect: (files: File[]) => void;
 }
 
@@ -63,8 +69,32 @@ export function UploadModal({
   setDepartment,
   courseName,
   setCourseName,
+  uploadType,
+  setUploadType,
   onFileSelect,
 }: UploadModalProps) {
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      setLoadingCourses(true);
+      try {
+        const response = await api.get('/schools/courses');
+        if (response.data.success && Array.isArray(response.data.data)) {
+          setCourses(response.data.data);
+        } else if (Array.isArray(response.data)) {
+          setCourses(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch courses', error);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+    fetchCourses();
+  }, []);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] p-0 gap-0 max-h-[85vh] overflow-hidden">
@@ -76,14 +106,32 @@ export function UploadModal({
         </DialogHeader>
         
         <div className="px-6 pb-6 space-y-6 overflow-y-auto max-h-[75vh]">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
+          <div className="space-y-3 pt-4">
+            <Label className="font-semibold text-foreground text-sm">Upload Type</Label>
+            <RadioGroup 
+              value={uploadType} 
+              onValueChange={(val) => setUploadType(val as UploadType)}
+              className="flex gap-6"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="materials" id="r1" />
+                <Label htmlFor="r1" className="cursor-pointer">Materials</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="pq" id="r2" />
+                <Label htmlFor="r2" className="cursor-pointer">Past Question</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label className="font-semibold text-foreground text-sm">Department</Label>
               <Select value={department} onValueChange={setDepartment}>
                 <SelectTrigger className="h-10">
                   <SelectValue placeholder="Select Department" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent side="bottom">
                   {DEPARTMENTS.map((dept) => (
                     <SelectItem key={dept} value={dept}>
                       {dept}
@@ -94,12 +142,28 @@ export function UploadModal({
             </div>
             <div className="space-y-2">
               <Label className="font-semibold text-foreground text-sm">Course Title</Label>
-              <Input 
-                value={courseName} 
-                onChange={(e) => setCourseName(e.target.value)} 
-                placeholder="e.g., CS101: Intro to Logic"
-                className="h-10"
-              />
+              <Select value={courseName} onValueChange={setCourseName}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder={loadingCourses ? "Loading courses..." : "Select Course"} />
+                </SelectTrigger>
+                <SelectContent side="bottom">
+                  {courses.length > 0 ? (
+                    courses.map((c: any) => {
+                       const value = c.code || c.name || c.title || c;
+                       const label = (typeof c === 'object' && c.code && c.title) 
+                         ? `${c.code}: ${c.title}` 
+                         : (c.name || c.title || c.code || c);
+                       return (
+                         <SelectItem key={c.id || String(value)} value={String(value)}>
+                           {label}
+                         </SelectItem>
+                       );
+                    })
+                  ) : (
+                     <SelectItem value="none" disabled>No courses available</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label className="font-semibold text-foreground text-sm">Academic Level</Label>
@@ -107,7 +171,7 @@ export function UploadModal({
                 <SelectTrigger className="h-10">
                   <SelectValue placeholder="Select Level" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent side="bottom">
                   <SelectItem value="100">100 Level</SelectItem>
                   <SelectItem value="200">200 Level</SelectItem>
                   <SelectItem value="300">300 Level</SelectItem>

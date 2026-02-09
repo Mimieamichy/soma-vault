@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BookOpen, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UploadZone } from '@/components/archive/UploadZone';
 import {
@@ -53,6 +53,27 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
   const [frequency, setFrequency] = useState('');
   const [duration, setDuration] = useState('');
   const [files, setFiles] = useState<File[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      setLoadingCourses(true);
+      try {
+        const response = await api.get('/schools/courses');
+        if (response.data.success && Array.isArray(response.data.data)) {
+          setCourses(response.data.data);
+        } else if (Array.isArray(response.data)) {
+          setCourses(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch courses', error);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+    fetchCourses();
+  }, []);
 
   const handleFileUpload = (uploaded: File[]) => {
     setFiles(prev => [...prev, ...uploaded]);
@@ -97,12 +118,28 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
       {/* Course Name */}
       <div className="space-y-2">
         <Label htmlFor="courseName">Course Title</Label>
-        <Input
-          id="courseName"
-          value={courseName}
-          onChange={(e) => setCourseName(e.target.value)}
-          placeholder="e.g., Organic Chemistry"
-        />
+        <Select value={courseName} onValueChange={setCourseName}>
+          <SelectTrigger id="courseName">
+            <SelectValue placeholder={loadingCourses ? "Loading courses..." : "Select Course"} />
+          </SelectTrigger>
+          <SelectContent side="bottom">
+            {courses.length > 0 ? (
+              courses.map((c: any) => {
+                const value = c.code || c.name || c.title || c;
+                const label = (typeof c === 'object' && c.code && c.title) 
+                  ? `${c.code}: ${c.title}` 
+                  : (c.name || c.title || c.code || c);
+                return (
+                  <SelectItem key={c.id || String(value)} value={String(value)}>
+                    {label}
+                  </SelectItem>
+                );
+              })
+            ) : (
+              <SelectItem value="none" disabled>No courses available</SelectItem>
+            )}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2">
@@ -111,7 +148,7 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
           <SelectTrigger>
             <SelectValue placeholder="Select department" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent side="bottom">
             {DEPARTMENTS.map((dept) => (
               <SelectItem key={dept} value={dept}>
                 {dept}
@@ -128,7 +165,7 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
           <SelectTrigger>
             <SelectValue placeholder="Select level" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent side="bottom">
             <SelectItem value="100">100 Level</SelectItem>
             <SelectItem value="200">200 Level</SelectItem>
             <SelectItem value="300">300 Level</SelectItem>
@@ -145,7 +182,7 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
           <SelectTrigger>
             <SelectValue placeholder="Select frequency" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent side="bottom">
             <SelectItem value="daily">Daily Sessions</SelectItem>
             <SelectItem value="weekly">Weekly Sessions</SelectItem>
             <SelectItem value="bi-weekly">Bi-weekly Sessions</SelectItem>
@@ -160,7 +197,7 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
           <SelectTrigger>
             <SelectValue placeholder="Select duration" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent side="bottom">
             <SelectItem value="1">1 Month</SelectItem>
             <SelectItem value="2">2 Months</SelectItem>
             <SelectItem value="3">3 Months</SelectItem>

@@ -14,19 +14,23 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email && password) {
+      setIsSubmitting(true);
       try {
-        await login(email, password);
+        await login(email.trim(), password);
         toast.success('Logged in successfully');
         navigate('/study-planner');
       } catch (error: any) {
         console.error('Login failed', error);
         toast.error(error.response?.data?.error || 'Invalid credentials');
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -87,7 +91,9 @@ export default function Login() {
                 </Button>
               </div>
             </div>
-            <Button type="submit" className="w-full" variant="accent">Sign In</Button>
+            <Button type="submit" className="w-full" variant="accent" disabled={isSubmitting}>
+              {isSubmitting ? 'Signing in...' : 'Sign In'}
+            </Button>
           </form>
         </CardContent>
         <CardFooter className="flex justify-center">

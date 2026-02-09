@@ -78,7 +78,7 @@ export default function Profile() {
                 <GraduationCap className="h-4 w-4" />
                 <span>{user?.school || 'No School'}</span>
                 <span>•</span>
-                <span>{user?.role || 'Student'}</span>
+               
               </div>
             </div>
             

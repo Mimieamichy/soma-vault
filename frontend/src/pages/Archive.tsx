@@ -8,7 +8,7 @@ import { FolderTree } from '@/components/archive/FolderTree';
 
 import { PQHub } from '@/components/archive/PQHub';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { UploadModal } from '@/components/archive/UploadModal';
+import { UploadModal, UploadType } from '@/components/archive/UploadModal';
 import { mockArchiveMaterials, mockArchivePQs } from '@/data/mockData';
 
 export default function Archive() {
@@ -27,6 +27,7 @@ export default function Archive() {
   const [pqFile, setPqFile] = useState<File | null>(null);
   const [materialsUploadOpen, setMaterialsUploadOpen] = useState(false);
   const [pqUploadOpen, setPqUploadOpen] = useState(false);
+  const [uploadType, setUploadType] = useState<UploadType>('materials');
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredMaterials = materials.filter(m => 
@@ -43,16 +44,24 @@ export default function Archive() {
       return;
     }
     const ext = materialsFile.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx';
-    const newMaterial = {
+    const newItem = {
       id: `new-${Date.now()}`,
       folderId: selectedFolder || 'root',
       title: materialsCourseName,
       type: ext as 'pdf' | 'docx',
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       size: `${(materialsFile.size / (1024 * 1024)).toFixed(1)} MB`,
+      category: uploadType
     };
-    setMaterials([newMaterial, ...materials]);
-    toast.success('Material uploaded successfully');
+    
+    if (uploadType === 'pq') {
+      setPqMaterials([newItem, ...pqMaterials]);
+      toast.success('Past question uploaded successfully');
+    } else {
+      setMaterials([newItem, ...materials]);
+      toast.success('Material uploaded successfully');
+    }
+
     setMaterialsLevel('');
     setMaterialsDepartment('');
     setMaterialsCourseName('');
@@ -66,16 +75,24 @@ export default function Archive() {
       return;
     }
     const ext = pqFile.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx';
-    const newPQ = {
+    const newItem = {
       id: `new-${Date.now()}`,
       folderId: selectedFolder || 'root',
       title: pqCourseName,
       type: ext as 'pdf' | 'docx',
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       size: `${(pqFile.size / (1024 * 1024)).toFixed(1)} MB`,
+      category: uploadType
     };
-    setPqMaterials([newPQ, ...pqMaterials]);
-    toast.success('Past question uploaded successfully');
+
+    if (uploadType === 'materials') {
+      setMaterials([newItem, ...materials]);
+      toast.success('Material uploaded successfully');
+    } else {
+      setPqMaterials([newItem, ...pqMaterials]);
+      toast.success('Past question uploaded successfully');
+    }
+
     setPqLevel('');
     setPqDepartment('');
     setPqCourseName('');
@@ -108,14 +125,20 @@ export default function Archive() {
 
                 <Button 
                   className="hidden md:flex bg-accent hover:bg-accent/90 text-accent-foreground"
-                  onClick={() => setMaterialsUploadOpen(true)}
+                  onClick={() => {
+                    setMaterialsUploadOpen(true);
+                    setUploadType('materials');
+                  }}
                 >
                   Upload
                 </Button>
              </div>
             <Button
               className="md:hidden fixed bottom-24 right-6 z-50 shadow-lg bg-accent hover:bg-accent/90 text-accent-foreground"
-              onClick={() => setMaterialsUploadOpen(true)}
+              onClick={() => {
+                setMaterialsUploadOpen(true);
+                setUploadType('materials');
+              }}
             >
               <Upload className="h-4 w-4 mr-2" />
               Upload
@@ -130,6 +153,8 @@ export default function Archive() {
               setDepartment={setMaterialsDepartment}
               courseName={materialsCourseName}
               setCourseName={setMaterialsCourseName}
+              uploadType={uploadType}
+              setUploadType={setUploadType}
               onFileSelect={(files) => setMaterialsFile(files[0] || null)}
             />
           </div>
@@ -166,14 +191,20 @@ export default function Archive() {
 
                     <Button 
                       className="hidden md:flex bg-accent hover:bg-accent/90 text-accent-foreground"
-                      onClick={() => setPqUploadOpen(true)}
+                      onClick={() => {
+                        setPqUploadOpen(true);
+                        setUploadType('pq');
+                      }}
                     >
                       Upload
                     </Button>
                  </div>
                 <Button
                   className="md:hidden fixed bottom-24 right-6 z-50 shadow-lg bg-accent hover:bg-accent/90 text-accent-foreground"
-                  onClick={() => setPqUploadOpen(true)}
+                  onClick={() => {
+                    setPqUploadOpen(true);
+                    setUploadType('pq');
+                  }}
                 >
                   <Upload className="h-4 w-4 mr-2" />
                   Upload
@@ -188,6 +219,8 @@ export default function Archive() {
                   setDepartment={setPqDepartment}
                   courseName={pqCourseName}
                   setCourseName={setPqCourseName}
+                  uploadType={uploadType}
+                  setUploadType={setUploadType}
                   onFileSelect={(files) => setPqFile(files[0] || null)}
                 />
               </div>
