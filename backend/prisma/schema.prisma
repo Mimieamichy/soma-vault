@@ -232,7 +232,6 @@ enum MaterialType {
 enum StudyFrequency {
   DAILY
   WEEKLY
-  TWICE_WEEKLY
   BIWEEKLY
 }
 

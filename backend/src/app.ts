@@ -30,7 +30,7 @@ import schoolRouter from "../src/domain/schools/school.route"
 
 app.use("/api/v1/auth", authRouter)
 app.use("/api/v1/studyPlan", studyRouter)
-app.use("/api/v1/materials", materialRouter)
+app.use("/api/v1/material", materialRouter)
 app.use("/api/v1/pqhub", pqHubRouter)
 app.use("/api/v1/schools", schoolRouter)
 
