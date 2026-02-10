@@ -142,11 +142,16 @@ class MaterialService {
     return material;
   }
 
-  async getUserMaterials(userId: string, group: string, archived?: boolean) {
+  async getUserMaterials(userId: string, group: string, materialType: string, archived?: boolean) {
     const where: any = { userId };
 
     if (typeof archived === 'boolean') {
       where.archived = archived;
+    }
+
+
+    if (materialType) {
+      where.materialType = materialType;
     }
 
     if (group && group.length > 0) {
@@ -241,78 +246,50 @@ class MaterialService {
     };
   }
 
-  async getMaterialsBygroupName(groupName: string) {
-    const [materials, totalCount] = await prisma.$transaction([
-      prisma.material.findMany({
-        where: { group: groupName },
-        orderBy: { uploadedAt: 'desc' }
-      }),
-      prisma.material.count({
-        where: { group: groupName }
-      })
-    ]);
+  async getMaterialsFolderView() {
+  const materials = await prisma.material.findMany({
+    where: { archived: false },
+    orderBy: { uploadedAt: "desc" }
+  });
 
-    return {
-      group: groupName,
-      count: totalCount,
-      materials: materials
-    };
+  const folderTree: Record<string, any> = {};
+
+  for (const material of materials) {
+    const { school, group, level } = material;
+
+    if (!folderTree[school]) {
+      folderTree[school] = {
+        school,
+        groups: {}
+      };
+    }
+
+    if (!folderTree[school].groups[group]) {
+      folderTree[school].groups[group] = {
+        group,
+        levels: {}
+      };
+    }
+
+    if (!folderTree[school].groups[group].levels[level]) {
+      folderTree[school].groups[group].levels[level] = {
+        level,
+        materials: []
+      };
+    }
+
+    folderTree[school].groups[group].levels[level].materials.push(material);
   }
 
-  async getMaterialsBySchoolName(schoolName: string) {
-    const [materials, totalCount] = await prisma.$transaction([
-      prisma.material.findMany({
-        where: { school: schoolName },
-        orderBy: { uploadedAt: 'desc' }
-      }),
-      prisma.material.count({
-        where: { school: schoolName }
-      })
-    ]);
-
-    return {
-      school: schoolName,
-      count: totalCount,
-      materials: materials
-    };
-  }
-
-  async getMaterialsByLevelName(levelName: string) {
-    const [materials, totalCount] = await prisma.$transaction([
-      prisma.material.findMany({
-        where: { level: levelName },
-        orderBy: { uploadedAt: 'desc' }
-      }),
-      prisma.material.count({
-        where: { level: levelName }
-      })
-    ]);
-
-    return {
-      level: levelName,
-      count: totalCount,
-      materials: materials
-    };
-  }
-
-
-  async getMaterialsByMaterialType(MaterialType: string) {
-    const [materials, totalCount] = await prisma.$transaction([
-      prisma.material.findMany({
-        where: { materialType: MaterialType },
-        orderBy: { uploadedAt: 'desc' }
-      }),
-      prisma.material.count({
-        where: { materialType: MaterialType }
-      })
-    ]);
-
-    return {
-      materialType: MaterialType,
-      count: totalCount,
-      materials: materials
-    };
-  }
+  // Convert objects → arrays (frontend-friendly)
+  return Object.values(folderTree).map((school: any) => ({
+    school: school.school,
+    groups: Object.values(school.groups).map((group: any) => ({
+      group: group.group,
+      levels: Object.values(group.levels)
+    }))
+  }));
+}
 
 
 
