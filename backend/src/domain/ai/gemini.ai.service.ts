@@ -3,6 +3,7 @@ import { StudyFragment } from '@prisma/client';
 import { GoogleGenAI } from "@google/genai";
 import prisma from "../../lib/prisma";
 
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 // const prisma = new PrismaClient(); // Removed: Use singleton instance
 
 
@@ -274,18 +275,35 @@ class AIService {
 
 
   async extractTextFromPDF(buffer: Buffer): Promise<string> {
-    // For PDF text extraction, you'd use a library like pdf-parse
-    const pdfParse = await import('pdf-parse');
-    
-    try {
-      const parseFunc = (pdfParse as any).default || pdfParse;
-      const data = await parseFunc(buffer);
-      return data.text ?? '';
-    } catch (error) {
-      console.error('Error extracting PDF text:', error);
-      throw new Error('Failed to extract text from PDF');
+  try {
+    // This is the crucial line: Explicitly convert Buffer to a fresh Uint8Array
+    const data = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+
+    const loadingTask = pdfjsLib.getDocument({
+      data: data, // Pass the explicit Uint8Array here
+      useWorkerFetch: false,
+      isEvalSupported: false,
+    });
+
+    const pdf = await loadingTask.promise;
+    let text = "";
+
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const content = await page.getTextContent();
+
+      text += content.items
+        .map((item: any) => item.str || "")
+        .join(" ") + "\n";
     }
+
+    return text.trim();
+  } catch (error: any) {
+    console.error('Error extracting PDF text:', error);
+    throw new Error(`Failed to extract text from PDF: ${error.message}`);
   }
+}
+
 
   async extractTextFromImage(buffer: Buffer, mimeType: string = 'image/jpeg'): Promise<string> {
     try {

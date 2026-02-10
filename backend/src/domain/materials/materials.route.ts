@@ -1,36 +1,11 @@
 // routes/material.routes.ts
 import { Router } from 'express';
-import multer from 'multer';
 import materialController from './materials.controller';
 import { authenticate } from '../../shared/middlewares/auth.middleware';
 
 const materialRouter = Router();
 
-// Configure multer for file uploads
-const storage = multer.memoryStorage();
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain',
-      'image/jpeg',
-      'image/png',
-      'image/jpg'
-    ];
-
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only PDF, DOC, DOCX, TXT, and images are allowed.'));
-    }
-  }
-});
+import upload from '../../shared/utils/fileUpload';
 
 // All routes require authentication
 materialRouter.use(authenticate);
@@ -50,7 +25,7 @@ materialRouter.get('/search', (req, res) => materialController.searchMaterials(r
 
 // Get specific material
 materialRouter.get('/:id', (req, res) => materialController.getMaterial(req, res));
-materialRouter.get('/:departmentName', (req, res) => materialController.getMaterialsBygroupName(req, res));
+materialRouter.get('/:groupName', (req, res) => materialController.getMaterialsBygroupName(req, res));
 materialRouter.get('/:levelName', (req, res) => materialController.getMaterialsByLevelName(req, res));
 materialRouter.get('/:materialType', (req, res) => materialController.getMaterialsByMaterialType(req, res));
 materialRouter.get('/:schoolName', (req, res) => materialController.getMaterialsBySchoolName(req, res));

@@ -28,6 +28,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/pdf-parse": "^1.1.5",
+    "@types/pdfjs-dist": "^2.10.377",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
@@ -37,6 +38,7 @@
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "pdf-parse": "^2.4.5",
+    "pdfjs-dist": "^5.4.624",
     "swagger-ui-express": "^5.0.1"
   }
 }

@@ -277,7 +277,7 @@ const document = {
           },
           materialType: {
             type: 'string',
-            example: 'TEXTBOOK'
+            example: 'PQ'
           }
         }
       },
@@ -559,7 +559,7 @@ const document = {
           },
           materialType: {
             type: 'string',
-            example: 'TEXTBOOK'
+            example: 'PQ'
           }
         }
       },
@@ -633,7 +633,7 @@ const document = {
               },
               materialType: {
                 type: 'string',
-                example: 'TEXTBOOK'
+                example: 'PQ'
               },
               archived: {
                 type: 'boolean',
@@ -683,7 +683,7 @@ const document = {
                 },
                 materialType: {
                   type: 'string',
-                  example: 'TEXTBOOK'
+                  example: 'PQ'
                 },
                 archived: {
                   type: 'boolean',
@@ -754,7 +754,7 @@ const document = {
                   type: 'integer'
                 },
                 example: {
-                  'TEXTBOOK': 20,
+                  'PQ': 20,
                   'NOTES': 15,
                   'SLIDES': 10
                 }
@@ -789,7 +789,7 @@ const document = {
         properties: {
           materialType: {
             type: 'string',
-            example: 'TEXTBOOK'
+            example: 'PQ'
           }
         }
       },
@@ -1216,7 +1216,7 @@ const document = {
                   type: 'integer'
                 },
                 example: {
-                  'TEXTBOOK': 450,
+                  'PQ': 450,
                   'NOTES': 380,
                   'SLIDES': 250,
                   'ASSIGNMENT': 170

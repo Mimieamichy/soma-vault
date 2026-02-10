@@ -2,6 +2,7 @@
 import { MaterialType } from '@prisma/client';
 import prisma from '../../lib/prisma';
 import aiService from '../ai/gemini.ai.service';
+import fs from 'fs';
 
 interface CreateMaterialInput {
   userId: string;
@@ -66,6 +67,8 @@ class MaterialService {
   async uploadFile(data: UploadFileInput) {
     const { userId, title, file, group, level, materialType } = data;
 
+    console.log('Uploading file:', file)
+
     let content = '';
     let type: MaterialType;
 
@@ -75,7 +78,8 @@ class MaterialService {
 
     if (mimeType === 'application/pdf') {
       type = MaterialType.PDF;
-      content = await aiService.extractTextFromPDF(file.buffer);
+      const buffer = await fs.promises.readFile(file.path);
+      content = await aiService.extractTextFromPDF(buffer);
     } else if (mimeType.startsWith('image/')) {
       type = MaterialType.IMAGE;
       content = await aiService.extractTextFromImage(file.buffer, mimeType);
@@ -104,6 +108,7 @@ class MaterialService {
       userId,
       title: title || file.originalname,
       type,
+      fileUrl: file.path,
       content,
       fileSize: file.size,
       group: group,
