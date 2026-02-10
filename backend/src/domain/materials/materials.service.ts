@@ -115,22 +115,6 @@ class MaterialService {
     return material;
   }
 
-  async createTextNote(userId: string, title: string, content: string, group: string, level: string, materialType: string) {
-    return await this.createMaterial({
-      userId,
-      title: title || 'Untitled Note',
-      type: MaterialType.NOTE,
-      content,
-      fileSize: content.length,
-      group: group,
-      level: level,
-      school: (await prisma.user.findUnique({
-        where: { id: userId },
-        select: { school: true }
-      }))?.school || '',
-      materialType
-    });
-  }
 
   async getMaterial(materialId: string, userId: string) {
     const material = await prisma.material.findFirst({

@@ -38,8 +38,6 @@ materialRouter.use(authenticate);
 // Upload file (PDF, DOC, DOCX, TXT, Image)
 materialRouter.post('/upload', upload.single('file'), (req, res) => materialController.uploadFile(req, res));
 
-// Create text note
-materialRouter.post('/note', (req, res) => materialController.createTextNote(req, res));
 
 // Get all user materials
 materialRouter.get('/', (req, res) => materialController.getUserMaterials(req, res));

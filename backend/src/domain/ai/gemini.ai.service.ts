@@ -270,13 +270,17 @@ class AIService {
     }
   }
 
+
+
+
   async extractTextFromPDF(buffer: Buffer): Promise<string> {
     // For PDF text extraction, you'd use a library like pdf-parse
-    const pdfParse = require('pdf-parse');
+    const pdfParse = await import('pdf-parse');
     
     try {
-      const data = await pdfParse(buffer);
-      return data.text;
+      const parseFunc = (pdfParse as any).default || pdfParse;
+      const data = await parseFunc(buffer);
+      return data.text ?? '';
     } catch (error) {
       console.error('Error extracting PDF text:', error);
       throw new Error('Failed to extract text from PDF');

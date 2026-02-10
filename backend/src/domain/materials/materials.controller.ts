@@ -43,37 +43,7 @@ class MaterialController {
     }
   }
 
-  async createTextNote(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      const { title, content, group, level, materialType } = req.body;
-
-      if (!title || !content) {
-        res.status(400).json({ error: 'Title and content are required' });
-        return;
-      }
-
-      if (!req.user?.userId) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
-
-      const material = await materialService.createTextNote(
-        req.user.userId,
-        title,
-        content,
-        group,
-        level,
-        materialType
-      );
-
-      res.status(201).json({success: true, data: material});
-    } catch (error) {
-      res.status(400).json({
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to create note'
-      });
-    }
-  }
+  
 
   async getMaterial(req: AuthRequest, res: Response): Promise<void> {
     try {

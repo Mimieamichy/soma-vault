@@ -2170,60 +2170,6 @@ const document = {
         }
       }
     },
-    '/material/note': {
-      post: {
-        tags: ['Materials'],
-        summary: 'Create text note',
-        description: 'Create a text-based study note',
-        security: [
-          {
-            bearerAuth: []
-          }
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/CreateTextNoteRequest'
-              }
-            }
-          }
-        },
-        responses: {
-          '201': {
-            description: 'Note created successfully',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/MaterialResponse'
-                }
-              }
-            }
-          },
-          '400': {
-            description: 'Bad request - Title and content are required',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ErrorResponse'
-                }
-              }
-            }
-          },
-          '401': {
-            description: 'Unauthorized',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ErrorResponse'
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     '/material': {
       get: {
         tags: ['Materials'],
