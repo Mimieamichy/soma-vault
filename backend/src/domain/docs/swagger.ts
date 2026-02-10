@@ -267,7 +267,7 @@ const document = {
             format: 'date-time',
             example: '2024-02-01T00:00:00Z'
           },
-          department: {
+          group: {
             type: 'string',
             example: 'Physics'
           },
@@ -549,7 +549,7 @@ const document = {
             type: 'string',
             example: 'Introduction to Physics'
           },
-          department: {
+          group: {
             type: 'string',
             example: 'Physics'
           },
@@ -575,7 +575,7 @@ const document = {
             type: 'string',
             example: 'Detailed notes on quantum mechanics principles...'
           },
-          department: {
+          group: {
             type: 'string',
             example: 'Physics'
           },
@@ -623,7 +623,7 @@ const document = {
                 type: 'string',
                 example: 'application/pdf'
               },
-              department: {
+              group: {
                 type: 'string',
                 example: 'Physics'
               },
@@ -673,7 +673,7 @@ const document = {
                   type: 'string',
                   example: 'Introduction to Physics'
                 },
-                department: {
+                group: {
                   type: 'string',
                   example: 'Physics'
                 },
@@ -709,7 +709,7 @@ const document = {
             type: 'string',
             example: 'Updated content...'
           },
-          department: {
+          group: {
             type: 'string',
             example: 'Physics'
           },
@@ -737,7 +737,7 @@ const document = {
                 type: 'integer',
                 example: 5
               },
-              byDepartment: {
+              bygroup: {
                 type: 'object',
                 additionalProperties: {
                   type: 'integer'
@@ -765,9 +765,9 @@ const document = {
       },
       FilterByFieldRequest: {
         type: 'object',
-        required: ['departmentName'],
+        required: ['groupName'],
         properties: {
-          departmentName: {
+          groupName: {
             type: 'string',
             example: 'Physics'
           }
@@ -1197,7 +1197,7 @@ const document = {
                 type: 'integer',
                 example: 1250
               },
-              byDepartment: {
+              bygroup: {
                 type: 'object',
                 additionalProperties: {
                   type: 'integer'
@@ -2245,9 +2245,9 @@ const document = {
             }
           },
           {
-            name: 'department',
+            name: 'group',
             in: 'query',
-            description: 'Filter by department',
+            description: 'Filter by group',
             required: false,
             schema: {
               type: 'string'
