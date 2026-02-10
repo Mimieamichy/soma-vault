@@ -56,7 +56,7 @@ class StudyPlanController {
         return;
       }
 
-      const { title, totalDays, studyFrequency, startDate, department, level, materialType } = req.body;
+      const { title, totalDays, studyFrequency, startDate, group, level, materialType } = req.body;
 
       if (!title || !totalDays || !studyFrequency) {
         res.status(400).json({
@@ -78,7 +78,7 @@ class StudyPlanController {
       studyFrequency: studyFrequency as StudyFrequency,
       startDate: startDate ? new Date(startDate) : new Date(),
       file: req.file,
-      department: department,
+      group: group,
       level: level,
       materialType: materialType
     });

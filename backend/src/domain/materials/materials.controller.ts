@@ -22,14 +22,14 @@ class MaterialController {
         return;
       }
 
-      const { title, department, level, materialType } = req.body;
+      const { title, group, level, materialType } = req.body;
 
 
       const material = await materialService.uploadFile({
         userId: req.user.userId,
         title,
         file: req.file,
-        department: department,
+        group: group,
         level: level,
         materialType: materialType
       });
@@ -45,7 +45,7 @@ class MaterialController {
 
   async createTextNote(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { title, content, department, level, materialType } = req.body;
+      const { title, content, group, level, materialType } = req.body;
 
       if (!title || !content) {
         res.status(400).json({ error: 'Title and content are required' });
@@ -61,7 +61,7 @@ class MaterialController {
         req.user.userId,
         title,
         content,
-        department,
+        group,
         level,
         materialType
       );
@@ -111,13 +111,13 @@ class MaterialController {
         return;
       }
 
-      const { archived, department } = req.query;
+      const { archived, group } = req.query;
       const archivedBool = archived === 'true' ? true : archived === 'false' ? false : undefined;
-      const departmentStr = department ? (department as string) : '';
+      const groupStr = group ? (group as string) : '';
 
       const materials = await materialService.getUserMaterials(
         req.user.userId,
-        departmentStr,
+        groupStr,
         archivedBool
       );
 
@@ -151,19 +151,19 @@ class MaterialController {
     }
   }
 
-  async getMaterialsByDepartmentName(req: AuthRequest, res: Response): Promise<void>{
-    const departmentName = req.body.departmentName;
+  async getMaterialsBygroupName(req: AuthRequest, res: Response): Promise<void>{
+    const groupName = req.body.groupName;
 
-    if (!departmentName) {
-      res.status(400).json({ error: 'Department name is required' });
+    if (!groupName) {
+      res.status(400).json({ error: 'group name is required' });
       return;
     }
     try {
-      const departments = await materialService.getMaterialsByDepartmentName(departmentName);
-      res.status(200).json({success: true, data: departments});
+      const groups = await materialService.getMaterialsBygroupName(groupName);
+      res.status(200).json({success: true, data: groups});
     }
     catch (error) {
-      res.status(400).json({success: false, error: error instanceof Error ? error.message : 'Failed to fetch materials by departments'});
+      res.status(400).json({success: false, error: error instanceof Error ? error.message : 'Failed to fetch materials by groups'});
     }
   };
 
@@ -177,8 +177,8 @@ class MaterialController {
       return;
     }
     try {
-      const departments = await materialService.getMaterialsByLevelName(levelName);
-      res.status(200).json({success: true, data: departments});
+      const groups = await materialService.getMaterialsByLevelName(levelName);
+      res.status(200).json({success: true, data: groups});
     }
     catch (error) {
       res.status(400).json({success: false, error: error instanceof Error ? error.message : 'Failed to fetch materials by level'});
@@ -194,8 +194,8 @@ class MaterialController {
       return;
     }
     try {
-      const departments = await materialService.getMaterialsByMaterialType(materialType);
-      res.status(200).json({success: true, data: departments});
+      const groups = await materialService.getMaterialsByMaterialType(materialType);
+      res.status(200).json({success: true, data: groups});
     }
     catch (error) {
       res.status(400).json({success: false, error: error instanceof Error ? error.message : 'Failed to fetch materials by material type'});
@@ -212,8 +212,8 @@ class MaterialController {
       return;
     }
     try {
-      const departments = await materialService.getMaterialsBySchoolName(schoolName);
-      res.status(200).json({success: true, data: departments});
+      const groups = await materialService.getMaterialsBySchoolName(schoolName);
+      res.status(200).json({success: true, data: groups});
     }
     catch (error) {
       res.status(400).json({success: false, error: error instanceof Error ? error.message : 'Failed to fetch materials by school'});
@@ -224,7 +224,7 @@ class MaterialController {
   async updateMaterial(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { title, content, department, archived } = req.body;
+      const { title, content, group, archived } = req.body;
 
       if (!req.user?.userId) {
         res.status(401).json({ error: 'Unauthorized' });
@@ -237,7 +237,7 @@ class MaterialController {
         return;
       }
 
-      const material = await materialService.updateMaterial(materialId, req.user.userId, { title, content, department, archived });
+      const material = await materialService.updateMaterial(materialId, req.user.userId, { title, content, group, archived });
 
       res.status(200).json({
         success: true,

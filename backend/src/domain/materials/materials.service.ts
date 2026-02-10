@@ -10,7 +10,7 @@ interface CreateMaterialInput {
   fileUrl?: string;
   content: string;
   fileSize?: number;
-  department: string;
+  group: string;
   level: string;
   school: string;
   materialType: string;
@@ -20,15 +20,15 @@ interface UploadFileInput {
   userId: string;
   title: string;
   file: Express.Multer.File;
-  department: string;
-  level: string;
-  materialType: string;
+  group: string;
+  level: '100' | '200' | '300' | '400' | '500';
+  materialType: 'PQ' | 'NOTES';
 }
 
 interface GetAllMaterialsInput {
   page?: number;
   limit?: number;
-  department?: string;
+  group?: string;
   level?: string;
   archived?: boolean;
   sortBy?: 'uploadedAt' | 'title' | 'lastAccessedAt';
@@ -37,7 +37,7 @@ interface GetAllMaterialsInput {
 
 class MaterialService {
   async createMaterial(data: CreateMaterialInput) {
-    const { userId, title, type, fileUrl, content, fileSize, department, level, materialType } = data;
+    const { userId, title, type, fileUrl, content, fileSize, group, level, materialType } = data;
 
     const school = await prisma.user.findUnique({
       where: { id: userId },
@@ -52,7 +52,7 @@ class MaterialService {
         fileUrl: fileUrl || null,
         content,
         fileSize: fileSize || null,
-        department: department,
+        group: group,
         archived: false,
         level: level,
         school: school?.school || '',
@@ -64,7 +64,7 @@ class MaterialService {
   }
 
   async uploadFile(data: UploadFileInput) {
-    const { userId, title, file, department, level, materialType } = data;
+    const { userId, title, file, group, level, materialType } = data;
 
     let content = '';
     let type: MaterialType;
@@ -106,7 +106,7 @@ class MaterialService {
       type,
       content,
       fileSize: file.size,
-      department: department,
+      group: group,
       level: level,
       school: school?.school || '',
       materialType: materialType,
@@ -115,14 +115,14 @@ class MaterialService {
     return material;
   }
 
-  async createTextNote(userId: string, title: string, content: string, department: string, level: string, materialType: string) {
+  async createTextNote(userId: string, title: string, content: string, group: string, level: string, materialType: string) {
     return await this.createMaterial({
       userId,
       title: title || 'Untitled Note',
       type: MaterialType.NOTE,
       content,
       fileSize: content.length,
-      department: department,
+      group: group,
       level: level,
       school: (await prisma.user.findUnique({
         where: { id: userId },
@@ -153,16 +153,16 @@ class MaterialService {
     return material;
   }
 
-  async getUserMaterials(userId: string, department: string, archived?: boolean) {
+  async getUserMaterials(userId: string, group: string, archived?: boolean) {
     const where: any = { userId };
 
     if (typeof archived === 'boolean') {
       where.archived = archived;
     }
 
-    if (department && department.length > 0) {
-      where.department = {
-        hasSome: department
+    if (group && group.length > 0) {
+      where.group = {
+        hasSome: group
       };
     }
 
@@ -194,14 +194,14 @@ class MaterialService {
   }
 
   async getAllMaterials(filters: GetAllMaterialsInput) {
-    const { page = 1, limit = 20, department, level, archived, sortBy = 'uploadedAt', sortOrder = 'desc' } = filters;
+    const { page = 1, limit = 20, group, level, archived, sortBy = 'uploadedAt', sortOrder = 'desc' } = filters;
 
     const skip = (page - 1) * limit;
 
     const where: any = {};
 
-    if (department) {
-      where.department = department;
+    if (group) {
+      where.group = group;
     }
 
     if (level) {
@@ -252,19 +252,19 @@ class MaterialService {
     };
   }
 
-  async getMaterialsByDepartmentName(departmentName: string) {
+  async getMaterialsBygroupName(groupName: string) {
     const [materials, totalCount] = await prisma.$transaction([
       prisma.material.findMany({
-        where: { department: departmentName },
+        where: { group: groupName },
         orderBy: { uploadedAt: 'desc' }
       }),
       prisma.material.count({
-        where: { department: departmentName }
+        where: { group: groupName }
       })
     ]);
 
     return {
-      department: departmentName,
+      group: groupName,
       count: totalCount,
       materials: materials
     };
@@ -330,7 +330,7 @@ class MaterialService {
   async updateMaterial(materialId: string, userId: string, data: {
     title?: string;
     content?: string;
-    department?: string;
+    group?: string;
     archived?: boolean;
   }) {
     const material = await prisma.material.findFirst({
@@ -407,7 +407,7 @@ class MaterialService {
             }
           },
           {
-            department: {
+            group: {
               contains: query,
               mode: 'insensitive'
             }
@@ -421,7 +421,7 @@ class MaterialService {
         id: true,
         title: true,
         type: true,
-        department: true,
+        group: true,
         uploadedAt: true,
         archived: true
       }

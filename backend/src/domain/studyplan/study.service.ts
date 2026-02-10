@@ -13,10 +13,10 @@ interface CreateStudyPlanInput {
   totalDays: number;
   studyFrequency: StudyFrequency;
   startDate: Date;
-  department?: string
+  group?: string
   file?: Express.Multer.File;
-  level?: string;
-  materialType?: string;
+  level?: '100' | '200' | '300' | '400' | '500';
+  materialType?: 'PQ' | 'NOTES';
 }
 
 interface StudyFragmentData {
@@ -104,11 +104,11 @@ class StudyPlanService {
       studyFrequency: StudyFrequency;
       startDate: Date;
       file: Express.Multer.File;
-      department: string;
+      group: string;
       level: '100' | '200' | '300' | '400' | '500';
-      materialType: 'NOTE' | 'PQ';
+      materialType: 'NOTES' | 'PQ';
     }) {
-      const { userId, title, totalDays, studyFrequency, startDate, file, department, level, materialType } = data;
+      const { userId, title, totalDays, studyFrequency, startDate, file, group, level, materialType } = data;
       if (!file) {
         throw new AppError('File is required for this operation', 400);
       }
@@ -117,7 +117,7 @@ class StudyPlanService {
       userId,
       title: file.originalname,
       file,
-      department,
+      group,
       level,
       materialType
     });
