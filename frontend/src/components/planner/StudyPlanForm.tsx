@@ -1,10 +1,20 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, FileText } from 'lucide-react';
+import { BookOpen, FileText, Calendar as CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { UploadZone } from '@/components/archive/UploadZone';
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -13,66 +23,54 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-const DEPARTMENTS = [
-  'Computer Science',
-  'Mechanical Engineering',
-  'Civil Engineering',
-  'Electrical Engineering',
-  'Chemistry',
-  'Geology',
-  'Physics',
-  'Mathematics',
-  'Microbiology',
-  'Biochemistry',
-  'Medicine',
-  'Pharmacy',
-  'Law',
-  'Economics',
-  'Accounting',
-  'Political Science',
-  'Mass Communication',
-  'Architecture',
-  'Theatre Arts',
-];
+
 
 interface StudyPlanFormProps {
   onSubmit: (data: {
-    department: string;
-    courseName: string;
+    group: string;
+    title: string;
     level: string;
-    frequency: string;
+    studyFrequency: string;
     duration: string;
+    startDate: Date;
+    materialType: 'notes' | 'pq';
     files: File[];
   }) => void;
+  isLoading?: boolean;
 }
 
-export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
-  const [courseName, setCourseName] = useState('');
-  const [department, setDepartment] = useState('');
+export function StudyPlanForm({ onSubmit, isLoading = false }: StudyPlanFormProps) {
+  const [title, setTitle] = useState('');
+  const [group, setGroup] = useState('');
   const [level, setLevel] = useState('');
-  const [frequency, setFrequency] = useState('');
+  const [studyFrequency, setStudyFrequency] = useState('');
   const [duration, setDuration] = useState('');
+  const [startDate, setStartDate] = useState<Date>();
+  const [materialType, setMaterialType] = useState<'notes' | 'pq'>('notes');
   const [files, setFiles] = useState<File[]>([]);
-  const [courses, setCourses] = useState<any[]>([]);
-  const [loadingCourses, setLoadingCourses] = useState(false);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(false);
 
   useEffect(() => {
-    const fetchCourses = async () => {
-      setLoadingCourses(true);
+    const fetchGroups = async () => {
+      setLoadingGroups(true);
       try {
-        const response = await api.get('/schools/courses');
-        if (response.data.success && Array.isArray(response.data.data)) {
-          setCourses(response.data.data);
+        const response = await api.get('/schools/course-groups');
+        console.log('Group API Response:', response);
+        if (response.data.success && response.data.data?.courses) {
+          setGroups(response.data.data.courses);
+        } else if (response.data.success && Array.isArray(response.data.data)) {
+          setGroups(response.data.data);
         } else if (Array.isArray(response.data)) {
-          setCourses(response.data);
+          setGroups(response.data);
         }
       } catch (error) {
-        console.error('Failed to fetch courses', error);
+        console.error('Failed to fetch groups', error);
       } finally {
-        setLoadingCourses(false);
+        setLoadingGroups(false);
       }
     };
-    fetchCourses();
+    fetchGroups();
   }, []);
 
   const handleFileUpload = (uploaded: File[]) => {
@@ -82,8 +80,8 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (courseName && department && level && frequency && duration) {
-      onSubmit({ department, courseName, level, frequency, duration, files });
+    if (title && group && level && studyFrequency && duration && startDate) {
+      onSubmit({ group, title, level, studyFrequency, duration, startDate, materialType, files });
     }
   };
 
@@ -97,6 +95,24 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
           <h3 className="font-semibold text-foreground">Create Study Plan</h3>
           <p className="text-sm text-muted-foreground">Generate a personalized study schedule</p>
         </div>
+      </div>
+
+      <div className="space-y-3">
+        <Label className="font-semibold text-foreground text-sm">Upload Type</Label>
+        <RadioGroup 
+          value={materialType} 
+          onValueChange={(val) => setMaterialType(val as 'notes' | 'pq')}
+          className="flex gap-6"
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="notes" id="r1" />
+            <Label htmlFor="r1" className="cursor-pointer">Notes</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="pq" id="r2" />
+            <Label htmlFor="r2" className="cursor-pointer">Past Question</Label>
+          </div>
+        </RadioGroup>
       </div>
 
       {/* Upload Material */}
@@ -117,43 +133,37 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
 
       {/* Course Name */}
       <div className="space-y-2">
-        <Label htmlFor="courseName">Course Title</Label>
-        <Select value={courseName} onValueChange={setCourseName}>
-          <SelectTrigger id="courseName">
-            <SelectValue placeholder={loadingCourses ? "Loading courses..." : "Select Course"} />
+        <Label htmlFor="title">Course Title</Label>
+        <Input 
+          id="title" 
+          value={title} 
+          onChange={(e) => setTitle(e.target.value)} 
+          placeholder="e.g., CS101: Intro to Logic" 
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Group</Label>
+        <Select value={group} onValueChange={setGroup}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder={loadingGroups ? "Loading groups..." : "Select group"} />
           </SelectTrigger>
           <SelectContent side="bottom">
-            {courses.length > 0 ? (
-              courses.map((c: any) => {
-                const value = c.code || c.name || c.title || c;
-                const label = (typeof c === 'object' && c.code && c.title) 
-                  ? `${c.code}: ${c.title}` 
-                  : (c.name || c.title || c.code || c);
+            {groups.length > 0 ? (
+              groups.map((g: any) => {
+                const value = g.code || g.name || g.title || g;
+                const label = (typeof g === 'object' && g.code && g.title) 
+                  ? `${g.code}: ${g.title}` 
+                  : (g.name || g.title || g.code || g);
                 return (
-                  <SelectItem key={c.id || String(value)} value={String(value)}>
+                  <SelectItem key={g.id || String(value)} value={String(value)}>
                     {label}
                   </SelectItem>
                 );
               })
             ) : (
-              <SelectItem value="none" disabled>No courses available</SelectItem>
+              <SelectItem value="none" disabled>No groups available</SelectItem>
             )}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Department</Label>
-        <Select value={department} onValueChange={setDepartment}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select department" />
-          </SelectTrigger>
-          <SelectContent side="bottom">
-            {DEPARTMENTS.map((dept) => (
-              <SelectItem key={dept} value={dept}>
-                {dept}
-              </SelectItem>
-            ))}
           </SelectContent>
         </Select>
       </div>
@@ -162,7 +172,7 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
       <div className="space-y-2">
         <Label>Academic Level</Label>
         <Select value={level} onValueChange={setLevel}>
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select level" />
           </SelectTrigger>
           <SelectContent side="bottom">
@@ -178,14 +188,14 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
       {/* Frequency */}
       <div className="space-y-2">
         <Label>Study Frequency</Label>
-        <Select value={frequency} onValueChange={setFrequency}>
-          <SelectTrigger>
+        <Select value={studyFrequency} onValueChange={setStudyFrequency}>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select frequency" />
           </SelectTrigger>
           <SelectContent side="bottom">
-            <SelectItem value="daily">Daily Sessions</SelectItem>
-            <SelectItem value="weekly">Weekly Sessions</SelectItem>
-            <SelectItem value="bi-weekly">Bi-weekly Sessions</SelectItem>
+            <SelectItem value="DAILY">Daily Sessions</SelectItem>
+            <SelectItem value="WEEKLY">Weekly Sessions</SelectItem>
+            <SelectItem value="BIWEEKLY">Bi-weekly Sessions</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -194,7 +204,7 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
       <div className="space-y-2">
         <Label>Duration</Label>
         <Select value={duration} onValueChange={setDuration}>
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select duration" />
           </SelectTrigger>
           <SelectContent side="bottom">
@@ -205,12 +215,49 @@ export function StudyPlanForm({ onSubmit }: StudyPlanFormProps) {
         </Select>
       </div>
 
+      {/* Start Date */}
+      <div className="space-y-2 flex flex-col">
+        <Label>Start Date</Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant={"outline"}
+              className={cn(
+                "w-full pl-3 text-left font-normal",
+                !startDate && "text-muted-foreground"
+              )}
+            >
+              {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={startDate}
+              onSelect={setStartDate}
+              disabled={(date) =>
+                date < new Date() || date < new Date("1900-01-01")
+              }
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
       <Button 
         type="submit" 
         className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-        disabled={!courseName || !department || !level || !frequency || !duration}
+        disabled={!title || !group || !level || !studyFrequency || !duration || !startDate || isLoading}
       >
-        Generate Study Plan
+        {isLoading ? (
+          <>
+            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            Generating Plan...
+          </>
+        ) : (
+          "Generate Study Plan"
+        )}
       </Button>
     </form>
   );

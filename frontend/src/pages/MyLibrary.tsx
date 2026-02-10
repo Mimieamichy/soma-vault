@@ -20,9 +20,10 @@ export default function MyLibrary() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadType, setUploadType] = useState<UploadType>('materials');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
 
-  const filteredMaterials = materials.filter(m => 
+  const filteredMaterials = materials.filter(m =>  
     m.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -30,11 +31,16 @@ export default function MyLibrary() {
     pq.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleLibrarySubmit = () => {
+  const handleLibrarySubmit = async () => {
     if (!level || !department || !courseName || !selectedFile) {
       toast.error('Please select level, department, enter course name, and choose a file.');
       return;
     }
+
+    setIsUploading(true);
+    // Simulate upload delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
     const ext = selectedFile.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx';
     const newItem = {
       id: `new-${Date.now()}`,
@@ -56,6 +62,7 @@ export default function MyLibrary() {
     setDepartment('');
     setCourseName('');
     setSelectedFile(null);
+    setIsUploading(false);
   };
 
   return (
@@ -106,13 +113,14 @@ export default function MyLibrary() {
           onSubmit={handleLibrarySubmit}
           level={level}
           setLevel={setLevel}
-          department={department}
-          setDepartment={setDepartment}
+          group={department}
+          setGroup={setDepartment}
           courseName={courseName}
           setCourseName={setCourseName}
-          uploadType={uploadType}
-          setUploadType={setUploadType}
+          materialType={uploadType}
+          setMaterialType={setUploadType}
           onFileSelect={(files) => setSelectedFile(files[0] || null)}
+          isLoading={isUploading}
         />
       </div>
 

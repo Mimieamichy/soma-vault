@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
@@ -20,29 +21,10 @@ import {
 } from '@/components/ui/select';
 import { UploadZone } from './UploadZone';
 
-const DEPARTMENTS = [
-  'Computer Science',
-  'Mechanical Engineering',
-  'Civil Engineering',
-  'Electrical Engineering',
-  'Chemistry',
-  'Geology',
-  'Physics',
-  'Mathematics',
-  'Microbiology',
-  'Biochemistry',
-  'Medicine',
-  'Pharmacy',
-  'Law',
-  'Economics',
-  'Accounting',
-  'Political Science',
-  'Mass Communication',
-  'Architecture',
-  'Theatre Arts',
-];
 
-export type UploadType = 'materials' | 'pq';
+  
+
+export type UploadType = 'notes' | 'pq';
 
 interface UploadModalProps {
   open: boolean;
@@ -50,13 +32,14 @@ interface UploadModalProps {
   onSubmit: () => void;
   level: string;
   setLevel: (val: string) => void;
-  department: string;
-  setDepartment: (val: string) => void;
+  group: string;
+  setGroup: (val: string) => void;
   courseName: string;
   setCourseName: (val: string) => void;
-  uploadType: UploadType;
-  setUploadType: (val: UploadType) => void;
+  materialType: UploadType;
+  setMaterialType: (val: UploadType) => void;
   onFileSelect: (files: File[]) => void;
+  isLoading?: boolean;
 }
 
 export function UploadModal({
@@ -65,34 +48,38 @@ export function UploadModal({
   onSubmit,
   level,
   setLevel,
-  department,
-  setDepartment,
+  group,
+  setGroup,
   courseName,
   setCourseName,
-  uploadType,
-  setUploadType,
+  materialType,
+  setMaterialType,
   onFileSelect,
+  isLoading = false,
 }: UploadModalProps) {
-  const [courses, setCourses] = useState<any[]>([]);
-  const [loadingCourses, setLoadingCourses] = useState(false);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(false);
 
   useEffect(() => {
-    const fetchCourses = async () => {
-      setLoadingCourses(true);
+    const fetchGroups = async () => {
+      setLoadingGroups(true);
       try {
-        const response = await api.get('/schools/courses');
-        if (response.data.success && Array.isArray(response.data.data)) {
-          setCourses(response.data.data);
+        const response = await api.get('/schools/course-groups');
+        console.log('Group API Response:', response);
+        if (response.data.success && response.data.data?.courses) {
+          setGroups(response.data.data.courses);
+        } else if (response.data.success && Array.isArray(response.data.data)) {
+          setGroups(response.data.data);
         } else if (Array.isArray(response.data)) {
-          setCourses(response.data);
+          setGroups(response.data);
         }
       } catch (error) {
-        console.error('Failed to fetch courses', error);
+        console.error('Failed to fetch groups', error);
       } finally {
-        setLoadingCourses(false);
+        setLoadingGroups(false);
       }
     };
-    fetchCourses();
+    fetchGroups();
   }, []);
 
   return (
@@ -109,13 +96,13 @@ export function UploadModal({
           <div className="space-y-3 pt-4">
             <Label className="font-semibold text-foreground text-sm">Upload Type</Label>
             <RadioGroup 
-              value={uploadType} 
-              onValueChange={(val) => setUploadType(val as UploadType)}
+              value={materialType} 
+              onValueChange={(val) => setMaterialType(val as UploadType)}
               className="flex gap-6"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="materials" id="r1" />
-                <Label htmlFor="r1" className="cursor-pointer">Materials</Label>
+                <RadioGroupItem value="notes" id="r1" />
+                <Label htmlFor="r1" className="cursor-pointer">Notes</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="pq" id="r2" />
@@ -126,52 +113,46 @@ export function UploadModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="font-semibold text-foreground text-sm">Department</Label>
-              <Select value={department} onValueChange={setDepartment}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Select Department" />
+              <Label className="font-semibold text-foreground text-sm">Group</Label>
+              <Select value={group} onValueChange={setGroup}>
+                <SelectTrigger className="h-10 w-full mb-2">
+                  <SelectValue placeholder={loadingGroups ? "Loading groups..." : "Select Group"} />
                 </SelectTrigger>
-                <SelectContent side="bottom">
-                  {DEPARTMENTS.map((dept) => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="font-semibold text-foreground text-sm">Course Title</Label>
-              <Select value={courseName} onValueChange={setCourseName}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder={loadingCourses ? "Loading courses..." : "Select Course"} />
-                </SelectTrigger>
-                <SelectContent side="bottom">
-                  {courses.length > 0 ? (
-                    courses.map((c: any) => {
-                       const value = c.code || c.name || c.title || c;
-                       const label = (typeof c === 'object' && c.code && c.title) 
-                         ? `${c.code}: ${c.title}` 
-                         : (c.name || c.title || c.code || c);
+                <SelectContent side="bottom" className="max-h-[200px]">
+                  {groups.length > 0 ? (
+                    groups.map((g: any) => {
+                       const value = g.code || g.name || g.title || g;
+                       const label = (typeof g === 'object' && g.code && g.title) 
+                         ? `${g.code}: ${g.title}` 
+                         : (g.name || g.title || g.code || g);
                        return (
-                         <SelectItem key={c.id || String(value)} value={String(value)}>
+                         <SelectItem key={g.id || String(value)} value={String(value)}>
                            {label}
                          </SelectItem>
                        );
                     })
                   ) : (
-                     <SelectItem value="none" disabled>No courses available</SelectItem>
+                     <SelectItem value="none" disabled>No groups available</SelectItem>
                   )}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
+              <Label className="font-semibold text-foreground text-sm">Course Title</Label>
+              <Input 
+                value={courseName} 
+                onChange={(e) => setCourseName(e.target.value)} 
+                placeholder="e.g., CS101: Intro to Logic"
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-2">
               <Label className="font-semibold text-foreground text-sm">Academic Level</Label>
               <Select value={level} onValueChange={setLevel}>
-                <SelectTrigger className="h-10">
+                <SelectTrigger className="h-10 w-full">
                   <SelectValue placeholder="Select Level" />
                 </SelectTrigger>
-                <SelectContent side="bottom">
+                <SelectContent side="bottom" className="max-h-[200px]">
                   <SelectItem value="100">100 Level</SelectItem>
                   <SelectItem value="200">200 Level</SelectItem>
                   <SelectItem value="300">300 Level</SelectItem>
@@ -191,8 +172,9 @@ export function UploadModal({
             <Button 
               className="bg-accent hover:bg-accent/90 text-accent-foreground m-6 gap-2 px-6" 
               onClick={onSubmit}
+              disabled={isLoading}
             >
-              Upload <Zap className="h-4 w-4 fill-current" />
+              {isLoading ? "Uploading..." : "Upload"} <Zap className="h-4 w-4 fill-current" />
             </Button>
           </div>
         </div>

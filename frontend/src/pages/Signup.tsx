@@ -106,7 +106,7 @@ export default function Signup() {
                 <SelectTrigger id="school">
                   <SelectValue placeholder="Select your university" />
                 </SelectTrigger>
-                <SelectContent side="bottom">
+                <SelectContent side="bottom" avoidCollisions={false}>
                   {schools.length > 0 ? (
                     schools.map((s, index) => (
                       <SelectItem key={`${s.id || s.name || s}-${index}`} value={s.name || s}>
