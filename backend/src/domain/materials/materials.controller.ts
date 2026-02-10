@@ -81,13 +81,15 @@ class MaterialController {
         return;
       }
 
-      const { archived, group } = req.query;
+      const { archived, group, materialType } = req.query;
       const archivedBool = archived === 'true' ? true : archived === 'false' ? false : undefined;
       const groupStr = group ? (group as string) : '';
+      const materialTypeStr = materialType ? (materialType as string) : '';
 
       const materials = await materialService.getUserMaterials(
         req.user.userId,
         groupStr,
+        materialTypeStr,
         archivedBool
       );
 
@@ -121,74 +123,17 @@ class MaterialController {
     }
   }
 
-  async getMaterialsBygroupName(req: AuthRequest, res: Response): Promise<void>{
-    const groupName = req.body.groupName;
-
-    if (!groupName) {
-      res.status(400).json({ error: 'group name is required' });
-      return;
-    }
+  async getMaterialsFolderView(req: AuthRequest, res: Response): Promise<void>{
     try {
-      const groups = await materialService.getMaterialsBygroupName(groupName);
+      const groups = await materialService.getMaterialsFolderView();
       res.status(200).json({success: true, data: groups});
     }
     catch (error) {
-      res.status(400).json({success: false, error: error instanceof Error ? error.message : 'Failed to fetch materials by groups'});
+      res.status(400).json({success: false, error: error instanceof Error ? error.message : 'Failed to fetch materials folder view' });
     }
   };
 
 
-  
-  async getMaterialsByLevelName(req: AuthRequest, res: Response): Promise<void>{
-    const levelName = req.body.levelName;
-
-    if (!levelName) {
-      res.status(400).json({ error: 'Level name is required' });
-      return;
-    }
-    try {
-      const groups = await materialService.getMaterialsByLevelName(levelName);
-      res.status(200).json({success: true, data: groups});
-    }
-    catch (error) {
-      res.status(400).json({success: false, error: error instanceof Error ? error.message : 'Failed to fetch materials by level'});
-    }
-  };
-
-
-  async getMaterialsByMaterialType(req: AuthRequest, res: Response): Promise<void>{
-    const materialType = req.body.materialType;
-
-    if (!materialType) {
-      res.status(400).json({ error: 'Material type is required' });
-      return;
-    }
-    try {
-      const groups = await materialService.getMaterialsByMaterialType(materialType);
-      res.status(200).json({success: true, data: groups});
-    }
-    catch (error) {
-      res.status(400).json({success: false, error: error instanceof Error ? error.message : 'Failed to fetch materials by material type'});
-    }
-  };
-
-  
-
-  async getMaterialsBySchoolName(req: AuthRequest, res: Response): Promise<void>{
-    const schoolName = req.body.schoolName;
-
-    if (!schoolName) {
-      res.status(400).json({ error: 'School Name is required' });
-      return;
-    }
-    try {
-      const groups = await materialService.getMaterialsBySchoolName(schoolName);
-      res.status(200).json({success: true, data: groups});
-    }
-    catch (error) {
-      res.status(400).json({success: false, error: error instanceof Error ? error.message : 'Failed to fetch materials by school'});
-    }
-  };
 
 
   async updateMaterial(req: AuthRequest, res: Response): Promise<void> {

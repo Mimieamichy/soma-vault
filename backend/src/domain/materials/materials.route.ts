@@ -23,10 +23,8 @@ materialRouter.get('/stats', (req, res) => materialController.getMaterialStats(r
 materialRouter.get('/search', (req, res) => materialController.searchMaterials(req, res));
 
 // 2. Filtered Routes (Add prefixes to avoid collisions)
-materialRouter.get('/group/:groupName', (req, res) => materialController.getMaterialsBygroupName(req, res));
-materialRouter.get('/level/:levelName', (req, res) => materialController.getMaterialsByLevelName(req, res));
-materialRouter.get('/type/:materialType', (req, res) => materialController.getMaterialsByMaterialType(req, res));
-materialRouter.get('/school/:schoolName', (req, res) => materialController.getMaterialsBySchoolName(req, res));
+materialRouter.get('/folders', (req, res) => materialController.getMaterialsFolderView(req, res));
+
 
 // 3. ID Specific Routes (Keep these at the bottom)
 materialRouter.get('/:id', (req, res) => materialController.getMaterial(req, res));
