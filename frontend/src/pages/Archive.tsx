@@ -3,6 +3,7 @@ import { ArrowLeft, Upload, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { api } from '@/lib/api';
 
 import { FolderTree } from '@/components/archive/FolderTree';
 
@@ -18,19 +19,20 @@ export default function Archive() {
   const [materials, setMaterials] = useState(mockArchiveMaterials);
   const [pqMaterials, setPqMaterials] = useState(mockArchivePQs);
   const [materialsLevel, setMaterialsLevel] = useState('');
-  const [materialsDepartment, setMaterialsDepartment] = useState('');
+  const [materialsGroup, setMaterialsGroup] = useState('');
   const [materialsCourseName, setMaterialsCourseName] = useState('');
   const [materialsFile, setMaterialsFile] = useState<File | null>(null);
   const [pqLevel, setPqLevel] = useState('');
-  const [pqDepartment, setPqDepartment] = useState('');
+  const [pqGroup, setPqGroup] = useState('');
   const [pqCourseName, setPqCourseName] = useState('');
   const [pqFile, setPqFile] = useState<File | null>(null);
   const [materialsUploadOpen, setMaterialsUploadOpen] = useState(false);
   const [pqUploadOpen, setPqUploadOpen] = useState(false);
-  const [uploadType, setUploadType] = useState<UploadType>('materials');
+  const [uploadType, setUploadType] = useState<UploadType>('notes');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
-  const filteredMaterials = materials.filter(m => 
+  const filteredMaterials = materials.filter(m =>  
     m.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -38,66 +40,110 @@ export default function Archive() {
     pq.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleMaterialsSubmit = () => {
-    if (!materialsLevel || !materialsDepartment || !materialsCourseName || !materialsFile) {
-      toast.error('Please select level, department, enter course name, and choose a file.');
+  const handleMaterialsSubmit = async () => {
+    if (!materialsLevel || !materialsGroup || !materialsCourseName || !materialsFile) {
+      toast.error('Please select level, group, enter course name, and choose a file.');
       return;
     }
-    const ext = materialsFile.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx';
-    const newItem = {
-      id: `new-${Date.now()}`,
-      folderId: selectedFolder || 'root',
-      title: materialsCourseName,
-      type: ext as 'pdf' | 'docx',
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      size: `${(materialsFile.size / (1024 * 1024)).toFixed(1)} MB`,
-      category: uploadType
-    };
-    
-    if (uploadType === 'pq') {
-      setPqMaterials([newItem, ...pqMaterials]);
-      toast.success('Past question uploaded successfully');
-    } else {
-      setMaterials([newItem, ...materials]);
-      toast.success('Material uploaded successfully');
-    }
 
-    setMaterialsLevel('');
-    setMaterialsDepartment('');
-    setMaterialsCourseName('');
-    setMaterialsFile(null);
-    setMaterialsUploadOpen(false);
+    const formData = new FormData();
+    formData.append('title', materialsCourseName);
+    formData.append('level', materialsLevel);
+    formData.append('group', materialsGroup);
+    formData.append('materialType', uploadType);
+    formData.append('file', materialsFile);
+
+    setIsUploading(true);
+    try {
+      const response = await api.post('/material/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const ext = materialsFile.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx';
+      const newItem = {
+        id: response.data.data?.id || `new-${Date.now()}`,
+        folderId: selectedFolder || 'root',
+        title: materialsCourseName,
+        type: ext as 'pdf' | 'docx',
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        size: `${(materialsFile.size / (1024 * 1024)).toFixed(1)} MB`,
+        category: uploadType
+      };
+      
+      if (uploadType === 'pq') {
+        setPqMaterials([newItem, ...pqMaterials]);
+        toast.success('Past question uploaded successfully');
+      } else {
+        setMaterials([newItem, ...materials]);
+        toast.success('Material uploaded successfully');
+      }
+
+      setMaterialsLevel('');
+      setMaterialsGroup('');
+      setMaterialsCourseName('');
+      setMaterialsFile(null);
+      setMaterialsUploadOpen(false);
+    } catch (error) {
+      console.error('Upload failed', error);
+      toast.error('Failed to upload material');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  const handlePQSubmit = () => {
-    if (!pqLevel || !pqDepartment || !pqCourseName || !pqFile) {
-      toast.error('Please select level, department, enter course name, and choose a file.');
+  const handlePQSubmit = async () => {
+    if (!pqLevel || !pqGroup || !pqCourseName || !pqFile) {
+      toast.error('Please select level, group, enter course name, and choose a file.');
       return;
     }
-    const ext = pqFile.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx';
-    const newItem = {
-      id: `new-${Date.now()}`,
-      folderId: selectedFolder || 'root',
-      title: pqCourseName,
-      type: ext as 'pdf' | 'docx',
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      size: `${(pqFile.size / (1024 * 1024)).toFixed(1)} MB`,
-      category: uploadType
-    };
 
-    if (uploadType === 'materials') {
-      setMaterials([newItem, ...materials]);
-      toast.success('Material uploaded successfully');
-    } else {
-      setPqMaterials([newItem, ...pqMaterials]);
-      toast.success('Past question uploaded successfully');
+    const formData = new FormData();
+    formData.append('title', pqCourseName);
+    formData.append('level', pqLevel);
+    formData.append('group', pqGroup);
+    formData.append('materialType', uploadType);
+    formData.append('file', pqFile);
+
+    setIsUploading(true);
+    try {
+      const response = await api.post('/material/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const ext = pqFile.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx';
+      const newItem = {
+        id: response.data.data?.id || `new-${Date.now()}`,
+        folderId: selectedFolder || 'root',
+        title: pqCourseName,
+        type: ext as 'pdf' | 'docx',
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        size: `${(pqFile.size / (1024 * 1024)).toFixed(1)} MB`,
+        category: uploadType
+      };
+
+      if (uploadType === 'notes') {
+        setMaterials([newItem, ...materials]);
+        toast.success('Material uploaded successfully');
+      } else {
+        setPqMaterials([newItem, ...pqMaterials]);
+        toast.success('Past question uploaded successfully');
+      }
+
+      setPqLevel('');
+      setPqGroup('');
+      setPqCourseName('');
+      setPqFile(null);
+      setPqUploadOpen(false);
+    } catch (error) {
+      console.error('Upload failed', error);
+      toast.error('Failed to upload material');
+    } finally {
+      setIsUploading(false);
     }
-
-    setPqLevel('');
-    setPqDepartment('');
-    setPqCourseName('');
-    setPqFile(null);
-    setPqUploadOpen(false);
   };
 
   return (
@@ -127,7 +173,7 @@ export default function Archive() {
                   className="hidden md:flex bg-accent hover:bg-accent/90 text-accent-foreground"
                   onClick={() => {
                     setMaterialsUploadOpen(true);
-                    setUploadType('materials');
+                    setUploadType('notes');
                   }}
                 >
                   Upload
@@ -137,7 +183,7 @@ export default function Archive() {
               className="md:hidden fixed bottom-24 right-6 z-50 shadow-lg bg-accent hover:bg-accent/90 text-accent-foreground"
               onClick={() => {
                 setMaterialsUploadOpen(true);
-                setUploadType('materials');
+                setUploadType('notes');
               }}
             >
               <Upload className="h-4 w-4 mr-2" />
@@ -149,13 +195,14 @@ export default function Archive() {
               onSubmit={handleMaterialsSubmit}
               level={materialsLevel}
               setLevel={setMaterialsLevel}
-              department={materialsDepartment}
-              setDepartment={setMaterialsDepartment}
+              group={materialsGroup}
+              setGroup={setMaterialsGroup}
               courseName={materialsCourseName}
               setCourseName={setMaterialsCourseName}
-              uploadType={uploadType}
-              setUploadType={setUploadType}
+              materialType={uploadType}
+              setMaterialType={setUploadType}
               onFileSelect={(files) => setMaterialsFile(files[0] || null)}
+              isLoading={isUploading}
             />
           </div>
 
@@ -215,13 +262,14 @@ export default function Archive() {
                   onSubmit={handlePQSubmit}
                   level={pqLevel}
                   setLevel={setPqLevel}
-                  department={pqDepartment}
-                  setDepartment={setPqDepartment}
+                  group={pqGroup}
+                  setGroup={setPqGroup}
                   courseName={pqCourseName}
                   setCourseName={setPqCourseName}
-                  uploadType={uploadType}
-                  setUploadType={setUploadType}
+                  materialType={uploadType}
+                  setMaterialType={setUploadType}
                   onFileSelect={(files) => setPqFile(files[0] || null)}
+                  isLoading={isUploading}
                 />
               </div>
 

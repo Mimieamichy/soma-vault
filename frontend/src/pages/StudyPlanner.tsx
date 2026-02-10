@@ -4,6 +4,8 @@ import { StudyPlanForm } from '@/components/planner/StudyPlanForm';
 import { FragmentCard } from '@/components/planner/FragmentCard';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -24,20 +26,22 @@ interface Fragment {
 
 interface StudyPlan {
   id: string;
-  department: string;
-  courseName: string;
+  group: string;
+  title: string;
   level: string;
-  frequency: string;
+  studyFrequency: string;
   duration: string;
+  startDate: Date;
   fragments: Fragment[];
   files?: File[];
   createdAt: Date;
   priority: 'low' | 'medium' | 'high';
   archived: boolean;
   subject?: string;
+  materialType?: 'notes' | 'pq';
 }
 
-const generateMockPlan = (courseName: string): Fragment[] => [
+const generateMockPlan = (title: string): Fragment[] => [
   {
     id: '1',
     title: 'Week 1: Introduction & Fundamentals',
@@ -92,26 +96,61 @@ export default function StudyPlanner() {
   const [studyPlans, setStudyPlans] = useState<StudyPlan[]>([]);
   const [currentPlanId, setCurrentPlanId] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleCreatePlan = (data: { 
-    department: string;
-    courseName: string; 
+  const handleCreatePlan = async (data: { 
+    group: string;
+    title: string; 
     level: string;
-    frequency: string; 
+    studyFrequency: string; 
     duration: string;
+    startDate: Date;
+    materialType: 'notes' | 'pq';
     files: File[];
   }) => {
-    const newPlan: StudyPlan = {
-      ...data,
-      id: `plan-${Date.now()}`,
-      fragments: generateMockPlan(data.courseName),
-      createdAt: new Date(),
-      priority: 'medium',
-      archived: false
-    };
-    setStudyPlans(prev => [...prev, newPlan]);
-    setCurrentPlanId(newPlan.id);
-    setIsDialogOpen(false);
+    setIsGenerating(true);
+    try {
+      const formData = new FormData();
+      if (data.files.length > 0) {
+        formData.append('file', data.files[0]);
+      }
+      formData.append('title', data.title);
+      // Assuming duration is in months, converting to approximate days
+      formData.append('totalDays', String(parseInt(data.duration) * 30));
+      formData.append('studyFrequency', data.studyFrequency);
+      formData.append('startDate', data.startDate.toISOString());
+      formData.append('group', data.group);
+      formData.append('level', data.level);
+      formData.append('materialType', data.materialType);
+
+      const response = await api.post('/studyplan/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      console.log('API Response:', response.data);
+      toast.success('Study plan generated successfully!');
+
+      // Create a local representation for UI (fallback to mock if API doesn't return plan structure)
+      // Ideally we would map response.data to StudyPlan
+      const newPlan: StudyPlan = {
+        ...data,
+        id: response.data?.id || `plan-${Date.now()}`,
+        fragments: response.data?.fragments || generateMockPlan(data.title),
+        createdAt: new Date(),
+        priority: 'medium',
+        archived: false
+      };
+      setStudyPlans(prev => [...prev, newPlan]);
+      setCurrentPlanId(newPlan.id);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to generate study plan:', error);
+      toast.error('Failed to generate study plan. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   // Get current active plan
@@ -169,7 +208,7 @@ export default function StudyPlanner() {
                 </DialogDescription>
               </DialogHeader>
               <div className="py-4">
-                <StudyPlanForm onSubmit={handleCreatePlan} />
+                <StudyPlanForm onSubmit={handleCreatePlan} isLoading={isGenerating} />
               </div>
             </DialogContent>
           </Dialog>
@@ -223,7 +262,7 @@ export default function StudyPlanner() {
                     <h3 className={`font-semibold truncate text-base ${
                       currentPlanId === plan.id ? 'text-red-600' : 'text-foreground'
                     }`}>
-                      {plan.courseName}
+                      {plan.title}
                     </h3>
                   </div>
                   <div className="w-full space-y-1">
@@ -253,7 +292,7 @@ export default function StudyPlanner() {
               <div className="flex flex-col gap-4 mb-6">
                 <div>
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h3 className="text-lg sm:text-xl font-bold text-foreground">{currentPlan.courseName}</h3>
+                    <h3 className="text-lg sm:text-xl font-bold text-foreground">{currentPlan.title}</h3>
                     {currentPlan.subject && (
                       <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
                         {currentPlan.subject}
@@ -262,9 +301,9 @@ export default function StudyPlanner() {
                   </div>
                   <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      {currentPlan.frequency} sessions
-                    </span>
+                        <Clock className="h-4 w-4" />
+                        {currentPlan.studyFrequency} sessions
+                      </span>
                     <span className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
                       {currentPlan.duration} month(s)
@@ -374,7 +413,7 @@ export default function StudyPlanner() {
                     </DialogDescription>
                   </DialogHeader>
                   <div className="py-4">
-                    <StudyPlanForm onSubmit={handleCreatePlan} />
+                    <StudyPlanForm onSubmit={handleCreatePlan} isLoading={isGenerating} />
                   </div>
                 </DialogContent>
               </Dialog>
