@@ -8,7 +8,7 @@ interface CreateMaterialInput {
   userId: string;
   title: string;
   type: MaterialType;
-  fileUrl?: string;
+  fileUrl: string;
   content: string;
   fileSize?: number;
   group: string;
@@ -50,7 +50,7 @@ class MaterialService {
         userId,
         title,
         type,
-        fileUrl: fileUrl || null,
+        fileUrl,
         content,
         fileSize: fileSize || null,
         group: group,
@@ -246,50 +246,58 @@ class MaterialService {
     };
   }
 
-  async getMaterialsFolderView() {
-  const materials = await prisma.material.findMany({
-    where: { archived: false },
-    orderBy: { uploadedAt: "desc" }
-  });
+  async getSchools() {
+    const schools = await prisma.material.findMany({
+      where: { archived: false },
+      distinct: ["school"],
+      select: { school: true }
+    });
 
-  const folderTree: Record<string, any> = {};
-
-  for (const material of materials) {
-    const { school, group, level } = material;
-
-    if (!folderTree[school]) {
-      folderTree[school] = {
-        school,
-        groups: {}
-      };
-    }
-
-    if (!folderTree[school].groups[group]) {
-      folderTree[school].groups[group] = {
-        group,
-        levels: {}
-      };
-    }
-
-    if (!folderTree[school].groups[group].levels[level]) {
-      folderTree[school].groups[group].levels[level] = {
-        level,
-        materials: []
-      };
-    }
-
-    folderTree[school].groups[group].levels[level].materials.push(material);
+    return schools.map(s => s.school);
   }
 
-  // Convert objects → arrays (frontend-friendly)
-  return Object.values(folderTree).map((school: any) => ({
-    school: school.school,
-    groups: Object.values(school.groups).map((group: any) => ({
-      group: group.group,
-      levels: Object.values(group.levels)
-    }))
-  }));
-}
+  async getGroups(school: string) {
+    const groups = await prisma.material.findMany({
+      where: {
+        archived: false,
+        school
+      },
+      distinct: ["group"],
+      select: { group: true }
+    });
+
+    return groups.map(g => g.group);
+  }
+
+  async getLevels(school: string, group: string) {
+    const levels = await prisma.material.findMany({
+      where: {
+        archived: false,
+        school,
+        group
+      },
+      distinct: ["level"],
+      select: { level: true }
+    });
+
+    return levels.map(l => l.level);
+  }
+
+
+  async getMaterialTypes(school: string, group: string, level: string) {
+    const levels = await prisma.material.findMany({
+      where: {
+        archived: false,
+        school,
+        group,
+        level
+      },
+      distinct: ["materialType"],
+      select: { materialType: true }
+    });
+
+    return levels.map(l => l.materialType);
+  }
 
 
 

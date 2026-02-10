@@ -123,15 +123,76 @@ class MaterialController {
     }
   }
 
-  async getMaterialsFolderView(req: AuthRequest, res: Response): Promise<void>{
+ async getSchools(req: Request, res: Response) {
     try {
-      const groups = await materialService.getMaterialsFolderView();
-      res.status(200).json({success: true, data: groups});
+      const data = await materialService.getSchools();
+      res.json({ success: true, data });
+    } catch (err) {
+      res.status(500).json({ success: false, message: "Failed to load schools" });
     }
-    catch (error) {
-      res.status(400).json({success: false, error: error instanceof Error ? error.message : 'Failed to fetch materials folder view' });
+  }
+
+  async getGroups(req: Request, res: Response) {
+    const { school } = req.query;
+
+    if (!school) {
+      return res.status(400).json({
+        success: false,
+        message: "school is required"
+      });
     }
-  };
+
+    try {
+      const data = await materialService.getGroups(school as string);
+      res.json({ success: true, data });
+    } catch (err) {
+      res.status(500).json({ success: false, message: "Failed to load groups" });
+    }
+  }
+
+  async getLevels(req: Request, res: Response) {
+    const { school, group } = req.query;
+
+    if (!school || !group) {
+      return res.status(400).json({
+        success: false,
+        message: "school and group are required"
+      });
+    }
+
+    try {
+      const data = await materialService.getLevels(
+        school as string,
+        group as string
+      );
+      res.json({ success: true, data });
+    } catch (err) {
+      res.status(500).json({ success: false, message: "Failed to load levels" });
+    }
+  }
+
+
+  async getMaterialTypes(req: Request, res: Response) {
+    const { school, group, level } = req.query;
+
+    if (!school || !group || !level) {
+      return res.status(400).json({
+        success: false,
+        message: "school, level and group are required"
+      });
+    }
+
+    try {
+      const data = await materialService.getMaterialTypes(
+        school as string,
+        group as string,
+        level as string
+      );
+      res.json({ success: true, data });
+    } catch (err) {
+      res.status(500).json({ success: false, message: "Failed to load Material Types" });
+    }
+  }
 
 
 

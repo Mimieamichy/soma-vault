@@ -2658,6 +2658,179 @@ const document = {
         }
       }
     },
+    "/materials/schools": {
+      get: {
+        tags: ["Materials"],
+        summary: "Get all schools with materials",
+        description: "Returns a list of distinct schools that have materials uploaded",
+        responses: {
+          200: {
+            description: "Schools fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    data: {
+                      type: "array",
+                      items: { type: "string", example: "Federal University, Lafia" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          500: {
+            description: "Server error"
+          }
+        }
+      }
+    },
+    "/materials/groups": {
+      get: {
+        tags: ["Materials"],
+        summary: "Get groups in a school",
+        description: "Returns distinct groups for a selected school",
+        parameters: [
+          {
+            name: "school",
+            in: "query",
+            required: true,
+            schema: { type: "string" },
+            example: "Federal University, Lafia"
+          }
+        ],
+        responses: {
+          200: {
+            description: "Groups fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    data: {
+                      type: "array",
+                      items: { type: "string", example: "Computer Science" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          400: {
+            description: "Missing school parameter"
+          },
+          500: {
+            description: "Server error"
+          }
+        }
+      }
+    },
+    "/materials/levels": {
+      get: {
+        tags: ["Materials"],
+        summary: "Get levels in a group",
+        description: "Returns distinct academic levels for a school and group",
+        parameters: [
+          {
+            name: "school",
+            in: "query",
+            required: true,
+            schema: { type: "string" },
+            example: "Federal University, Lafia"
+          },
+          {
+            name: "group",
+            in: "query",
+            required: true,
+            schema: { type: "string" },
+            example: "Computer Science"
+          }
+        ],
+        responses: {
+          200: {
+            description: "Levels fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    data: {
+                      type: "array",
+                      items: { type: "string", example: "300" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          400: {
+            description: "Missing school or group parameter"
+          },
+          500: {
+            description: "Server error"
+          }
+        }
+      }
+    },
+    "/materials/materialTypes": {
+      get: {
+        tags: ["Materials"],
+        summary: "Get material types for a level",
+        description: "Returns distinct material types for a specific school, group, and level",
+        parameters: [
+          {
+            name: "school",
+            in: "query",
+            required: true,
+            schema: { type: "string" },
+            example: "Federal University, Lafia"
+          },
+          {
+            name: "group",
+            in: "query",
+            required: true,
+            schema: { type: "string" },
+            example: "Computer Science"
+          },
+          {
+            name: "level",
+            in: "query",
+            required: true,
+            schema: { type: "string" },
+            example: "300"
+          }
+        ],
+        responses: {
+          200: {
+            description: "Material types fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    data: {
+                      type: "array",
+                      items: { type: "string", example: "Lecture Note" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          400: {
+            description: "Missing required query parameters"
+          },
+          500: {
+            description: "Server error"
+          }
+        }
+      }
+    },
     '/pqhub/ask': {
       post: {
         tags: ['PQ Hub'],

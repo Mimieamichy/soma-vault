@@ -36,7 +36,7 @@ model Material {
   userId          String        @db.ObjectId
   title           String
   type            MaterialType
-  fileUrl         String?
+  fileUrl         String
   content         String
   fileSize        Int?
   archived        Boolean       @default(false)

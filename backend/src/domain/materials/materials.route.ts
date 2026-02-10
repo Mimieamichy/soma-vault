@@ -22,8 +22,11 @@ materialRouter.get('/all', (req, res) => materialController.getAllMaterials(req,
 materialRouter.get('/stats', (req, res) => materialController.getMaterialStats(req, res));
 materialRouter.get('/search', (req, res) => materialController.searchMaterials(req, res));
 
-// 2. Filtered Routes (Add prefixes to avoid collisions)
-materialRouter.get('/folders', (req, res) => materialController.getMaterialsFolderView(req, res));
+// 2. Filtered Routes (Add prefixes to avoid collisions) /schools
+materialRouter.get('/schools', (req, res) => materialController.getSchools(req, res));
+materialRouter.get('/groups', (req, res) => materialController.getGroups(req, res));
+materialRouter.get('/levels', (req, res) => materialController.getLevels(req, res));
+materialRouter.get('/materialTypes', (req, res) => materialController.getMaterialTypes(req, res));
 
 
 // 3. ID Specific Routes (Keep these at the bottom)
