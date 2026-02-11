@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -23,6 +24,7 @@ export default function Signup() {
   const [schools, setSchools] = useState<any[]>([]);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { signup } = useAuth();
   const navigate = useNavigate();
@@ -55,6 +57,10 @@ export default function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!agreedToTerms) {
+      toast.error('You must agree to the Terms and Conditions to continue');
+      return;
+    }
     if (email && password && name && school) {
       setIsSubmitting(true);
       try {
@@ -156,6 +162,22 @@ export default function Signup() {
                 </Button>
               </div>
             </div>
+
+            <div className="flex items-start space-x-2 py-2">
+              <Checkbox 
+                id="terms" 
+                checked={agreedToTerms} 
+                onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+                className="mt-1"
+              />
+              <Label 
+                htmlFor="terms" 
+                className="text-sm leading-relaxed text-muted-foreground cursor-pointer select-none"
+              >
+                I agree to the <span className="text-primary font-medium">Terms and Conditions</span>. I understand that any material I upload will be available for other users to download and use.
+              </Label>
+            </div>
+
             <Button type="submit" className="w-full" variant="accent" disabled={isSubmitting}>
               {isSubmitting ? 'Creating account...' : 'Sign Up'}
             </Button>
