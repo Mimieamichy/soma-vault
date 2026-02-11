@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Mail, Moon, CreditCard, Check, Camera, User, Pencil, GraduationCap } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Mail, Moon, CreditCard, Check, Camera, User, Pencil, GraduationCap, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,9 +35,44 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [avatar, setAvatar] = useState<string | null>(null);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [oldPassword, setOldPassword] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+    }
+  }, [user]);
+
+  const handleSave = async () => {
+    if (password && !oldPassword) {
+      toast.error('Please enter your old password to set a new one');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      // In a real app, you would call your API here
+      // const response = await api.put('/user/profile', { name, oldPassword, newPassword: password });
+      
+      toast.success('Profile updated successfully');
+      setIsEditing(false);
+      setOldPassword('');
+      setPassword('');
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      toast.error('Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -126,18 +161,78 @@ export default function Profile() {
             <div className="space-y-4">
               <div className="grid gap-2">
                 <Label htmlFor="name">Full Name</Label>
-                <Input id="name" defaultValue={user?.name || ''} />
+                <Input 
+                  id="name" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your full name"
+                />
               </div>
+              
               <div className="grid gap-2">
                 <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" defaultValue={user?.email || ''} disabled />
+                <Input id="email" type="email" defaultValue={user?.email || ''} disabled className="bg-muted/50 cursor-not-allowed" />
               </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="school">School</Label>
-                <Input id="school" defaultValue={user?.school || ''} />
+                <Input id="school" defaultValue={user?.school || ''} disabled className="bg-muted/50 cursor-not-allowed" />
+                <p className="text-[10px] text-muted-foreground italic">School information is managed by administration</p>
               </div>
-              <div className="flex justify-end pt-2">
-                <Button onClick={() => setIsEditing(false)}>Save Changes</Button>
+
+              <Separator className="my-2" />
+              
+              <div className="grid gap-2">
+                <Label htmlFor="oldPassword">Old Password</Label>
+                <div className="relative">
+                  <Input 
+                    id="oldPassword" 
+                    type={showPassword ? "text" : "password"} 
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    placeholder="Enter current password to change"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="password">New Password</Label>
+                <div className="relative">
+                  <Input 
+                    id="password" 
+                    type={showPassword ? "text" : "password"} 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Leave blank to keep current"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button 
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                >
+                  {isSaving ? <LoadingSpinner size={16} className="mr-2" /> : null}
+                  Save Changes
+                </Button>
               </div>
             </div>
           </div>

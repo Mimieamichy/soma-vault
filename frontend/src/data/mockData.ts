@@ -6,6 +6,10 @@ export interface MaterialItem {
   type: 'pdf' | 'docx' | 'image';
   date: string;
   size: string;
+  fileUrl?: string | null;
+  content?: string;
+  category?: string;
+  materialType?: 'notes' | 'pq';
 }
 
 const SCHOOLS = ['Fulafia', 'Unizik', 'Unijos', 'Uniben', 'Esut', 'Uniport'];
@@ -213,7 +217,8 @@ const generateMaterials = (type: 'materials' | 'pq'): MaterialItem[] => {
             title,
             type: materialType,
             date: new Date(2024, 0, 1 + Math.floor(Math.random() * 28)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-            size: `${(0.5 + Math.random() * 5).toFixed(1)} MB`
+            size: `${(0.5 + Math.random() * 5).toFixed(1)} MB`,
+            materialType: type === 'materials' ? 'notes' : 'pq'
           });
         }
       });

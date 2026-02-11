@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import { api } from '@/lib/api';
 
 export interface Notification {
   id: string;
@@ -11,42 +12,51 @@ export interface Notification {
 
 interface NotificationContextType {
   notifications: Notification[];
+  fetchNotifications: () => Promise<void>;
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
-  markAsRead: (id: string) => void;
+  markAsRead: (id: string) => Promise<void>;
   clearAll: () => void;
   unreadCount: number;
+  isLoading: boolean;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    // Sample notifications for demonstration
-    {
-      id: '1',
-      title: 'Welcome to Soma Vault!',
-      message: 'Get started by creating your first study session.',
-      type: 'success',
-      timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-      read: false,
-    },
-    {
-      id: '2',
-      title: 'Study Reminder',
-      message: 'You have a study session scheduled for 3:00 PM today.',
-      type: 'info',
-      timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-      read: false,
-    },
-    {
-      id: '3',
-      title: 'Archive Updated',
-      message: 'New materials have been added to your archive.',
-      type: 'info',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-      read: true,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.get('/notification');
+      const data = response.data.data || response.data;
+      
+      if (Array.isArray(data)) {
+        const mapped: Notification[] = data.map((n: any) => ({
+          id: n.id,
+          title: n.title,
+          message: n.message,
+          type: (n.type?.toLowerCase() || 'info') as 'info' | 'success' | 'warning',
+          timestamp: new Date(n.createdAt || n.timestamp),
+          read: !!n.read || !!n.isRead
+        }));
+        setNotifications(mapped);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    
+    // Optional: Poll every 2 minutes
+    const interval = setInterval(fetchNotifications, 120000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
 
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: Notification = {
@@ -58,12 +68,21 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     setNotifications(prev => [newNotification, ...prev]);
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
+  const markAsRead = async (id: string) => {
+    try {
+      // Optimistic update
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification.id === id ? { ...notification, read: true } : notification
+        )
+      );
+
+      await api.patch(`/notification/${id}/read`);
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+      // Rollback on error if needed
+      fetchNotifications();
+    }
   };
 
   const clearAll = () => {
@@ -76,10 +95,12 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     <NotificationContext.Provider
       value={{
         notifications,
+        fetchNotifications,
         addNotification,
         markAsRead,
         clearAll,
         unreadCount,
+        isLoading
       }}
     >
       {children}

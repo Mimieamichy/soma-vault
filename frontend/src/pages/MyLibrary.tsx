@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Grid, List, Library, Upload, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { MaterialCard } from '@/components/archive/MaterialCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UploadModal, UploadType } from '@/components/archive/UploadModal';
-import { mockLibraryMaterials, mockLibraryPQs } from '@/data/mockData';
+import { MaterialItem } from '@/data/mockData';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { api } from '@/lib/api';
 
 export default function MyLibrary() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [materials, setMaterials] = useState(mockLibraryMaterials);
-  const [pqs, setPQs] = useState(mockLibraryPQs);
+  const [materials, setMaterials] = useState<MaterialItem[]>([]);
+  const [pqs, setPQs] = useState<MaterialItem[]>([]);
   const [activeTab, setActiveTab] = useState('materials');
   const [uploadOpen, setUploadOpen] = useState(false);
   const [level, setLevel] = useState('');
@@ -21,6 +23,40 @@ export default function MyLibrary() {
   const [uploadType, setUploadType] = useState<UploadType>('materials');
   const [searchTerm, setSearchTerm] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMyLibrary = async () => {
+      try {
+        setIsLoading(true);
+        const response = await api.get('/material');
+        const data = response.data.data || response.data;
+        
+        if (Array.isArray(data)) {
+          const mappedItems: MaterialItem[] = data.map((m: any) => ({
+            id: m.id,
+            title: m.title,
+            type: (m.type?.toLowerCase() || 'pdf') as 'pdf' | 'docx' | 'image',
+            date: m.uploadedAt ? new Date(m.uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A',
+            size: m.fileSize ? `${(m.fileSize / (1024 * 1024)).toFixed(1)} MB` : '0 MB',
+            fileUrl: m.fileUrl,
+            content: m.content,
+            materialType: m.materialType?.toLowerCase() === 'pq' ? 'pq' : 'notes'
+          }));
+
+          setMaterials(mappedItems.filter(m => m.materialType === 'notes'));
+          setPQs(mappedItems.filter(m => m.materialType === 'pq'));
+        }
+      } catch (error) {
+        console.error('Failed to fetch library materials:', error);
+        toast.error('Failed to load your library');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMyLibrary();
+  }, []);
 
 
   const filteredMaterials = materials.filter(m =>  
@@ -37,32 +73,49 @@ export default function MyLibrary() {
       return;
     }
 
+    const formData = new FormData();
+    formData.append('title', courseName);
+    formData.append('level', level);
+    formData.append('group', department);
+    formData.append('materialType', uploadType === 'materials' ? 'notes' : 'pq');
+    formData.append('file', selectedFile);
+
     setIsUploading(true);
-    // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      const response = await api.post('/material/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
-    const ext = selectedFile.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx';
-    const newItem = {
-      id: `new-${Date.now()}`,
-      title: courseName,
-      type: ext as 'pdf' | 'docx',
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      size: `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`,
-      category: uploadType
-    };
+      const m = response.data.data || response.data;
+      const newItem: MaterialItem = {
+        id: m.id || `new-${Date.now()}`,
+        title: m.title || courseName,
+        type: (m.type?.toLowerCase() || (selectedFile.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx')) as 'pdf' | 'docx',
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        size: m.fileSize ? `${(m.fileSize / (1024 * 1024)).toFixed(1)} MB` : `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`,
+        materialType: uploadType === 'materials' ? 'notes' : 'pq'
+      };
 
-    if (uploadType === 'materials') {
-      setMaterials([newItem, ...materials]);
-    } else {
-      setPQs([newItem, ...pqs]);
+      if (uploadType === 'materials') {
+        setMaterials([newItem, ...materials]);
+      } else {
+        setPQs([newItem, ...pqs]);
+      }
+      
+      toast.success(`Uploaded to ${uploadType === 'materials' ? 'My Materials' : 'My Past Questions'}`);
+      setUploadOpen(false);
+      setLevel('');
+      setDepartment('');
+      setCourseName('');
+      setSelectedFile(null);
+    } catch (error) {
+      console.error('Upload failed', error);
+      toast.error('Failed to upload material');
+    } finally {
+      setIsUploading(false);
     }
-    toast.success(`Uploaded to ${uploadType === 'materials' ? 'My Materials' : 'My Past Questions'}`);
-    setUploadOpen(false);
-    setLevel('');
-    setDepartment('');
-    setCourseName('');
-    setSelectedFile(null);
-    setIsUploading(false);
   };
 
   return (
@@ -144,7 +197,9 @@ export default function MyLibrary() {
         </TabsList>
 
         <TabsContent value="materials" className="space-y-6">
-          {materials.length > 0 ? (
+          {isLoading ? (
+            <LoadingSpinner />
+          ) : materials.length > 0 ? (
             <div className={`grid gap-4 ${
               viewMode === 'grid' 
                 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
@@ -166,7 +221,9 @@ export default function MyLibrary() {
         </TabsContent>
 
         <TabsContent value="pq" className="space-y-6">
-          {filteredPQs.length > 0 ? (
+          {isLoading ? (
+            <LoadingSpinner />
+          ) : filteredPQs.length > 0 ? (
             <div className={`grid gap-4 ${
               viewMode === 'grid' 
                 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
