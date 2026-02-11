@@ -293,7 +293,6 @@ class MaterialService {
         level
       },
       distinct: ["materialType"],
-      select: { materialType: true }
     });
 
     return levels.map(l => l.materialType);

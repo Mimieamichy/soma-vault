@@ -2658,7 +2658,7 @@ const document = {
         }
       }
     },
-    "/materials/schools": {
+    "/material/schools": {
       get: {
         tags: ["Materials"],
         summary: "Get all schools with materials",
@@ -2687,7 +2687,7 @@ const document = {
         }
       }
     },
-    "/materials/groups": {
+    "/material/groups": {
       get: {
         tags: ["Materials"],
         summary: "Get groups in a school",
@@ -2728,7 +2728,7 @@ const document = {
         }
       }
     },
-    "/materials/levels": {
+    "/material/levels": {
       get: {
         tags: ["Materials"],
         summary: "Get levels in a group",
@@ -2776,7 +2776,7 @@ const document = {
         }
       }
     },
-    "/materials/materialTypes": {
+    "/material/materialTypes": {
       get: {
         tags: ["Materials"],
         summary: "Get material types for a level",
