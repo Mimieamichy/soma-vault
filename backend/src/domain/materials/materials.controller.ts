@@ -175,6 +175,7 @@ class MaterialController {
   async getMaterialTypes(req: Request, res: Response) {
     const { school, group, level } = req.query;
 
+
     if (!school || !group || !level) {
       return res.status(400).json({
         success: false,

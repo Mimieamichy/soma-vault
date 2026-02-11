@@ -292,10 +292,9 @@ class MaterialService {
         group,
         level
       },
-      distinct: ["materialType"],
     });
 
-    return levels.map(l => l.materialType);
+    return levels;
   }
 
 
