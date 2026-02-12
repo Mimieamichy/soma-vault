@@ -20,16 +20,17 @@ export function NotificationsModal() {
 
   const getIcon = (type: Notification['type']) => {
     switch (type) {
-      case 'success':
+      case 'SUCCESS':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'warning':
+      case 'WARNING':
         return <AlertCircle className="h-4 w-4 text-yellow-500" />;
       default:
         return <Bell className="h-4 w-4 text-blue-500" />;
     }
   };
 
-  const formatTimestamp = (date: Date) => {
+  const formatTimestamp = (dateString: string) => {
+    const date = new Date(dateString);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
@@ -97,7 +98,7 @@ export function NotificationsModal() {
                         </h4>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          {formatTimestamp(notification.timestamp)}
+                          {formatTimestamp(notification.createdAt)}
                         </div>
                       </div>
                       <p className="text-sm text-muted-foreground">

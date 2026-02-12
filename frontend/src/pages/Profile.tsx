@@ -1,14 +1,18 @@
-import { useState, useRef, useEffect } from 'react';
-import { Mail, Moon, CreditCard, Check, Camera, User, Pencil, GraduationCap, Eye, EyeOff } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Mail, Moon, CreditCard, Check, User, Pencil, GraduationCap, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useTheme } from '@/components/theme-provider';
 import { SubscriptionModal } from '@/components/profile/SubscriptionModal';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+
 
 const subscriptionPlans = [
   {
@@ -33,17 +37,14 @@ const subscriptionPlans = [
 
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
-  const [avatar, setAvatar] = useState<string | null>(null);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [name, setName] = useState('');
-  const [oldPassword, setOldPassword] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
 
   useEffect(() => {
     if (user) {
@@ -52,33 +53,35 @@ export default function Profile() {
   }, [user]);
 
   const handleSave = async () => {
-    if (password && !oldPassword) {
-      toast.error('Please enter your old password to set a new one');
-      return;
-    }
-
     try {
       setIsSaving(true);
-      // In a real app, you would call your API here
-      // const response = await api.put('/user/profile', { name, oldPassword, newPassword: password });
+      
+      // Update name if changed
+      if (name !== user?.name) {
+        await updateProfile({ name });
+      }
+
+      // Update password if provided
+      if (password) {
+        await api.post('/auth/reset-password', { password });
+      }
+
+
+      
+
+      if (name === user?.name && !password) {
+        setIsEditing(false);
+        return;
+      }
       
       toast.success('Profile updated successfully');
       setIsEditing(false);
-      setOldPassword('');
       setPassword('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update profile:', error);
-      toast.error('Failed to update profile');
+      toast.error(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setAvatar(url);
     }
   };
 
@@ -100,7 +103,6 @@ export default function Profile() {
           // View Mode (Matches Screenshot)
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={avatar || ''} />
               <AvatarFallback className="bg-[#B91C1C] text-white text-3xl font-medium">
                 {user?.name ? getInitials(user.name) : 'SV'}
               </AvatarFallback>
@@ -137,25 +139,11 @@ export default function Profile() {
             </div>
             
             <div className="flex flex-col items-center mb-8">
-              <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                <Avatar className="h-24 w-24 border-2 border-border group-hover:border-accent transition-colors">
-                  <AvatarImage src={avatar || ''} />
-                  <AvatarFallback className="bg-[#B91C1C] text-white text-3xl font-medium">
-                    {user?.name ? getInitials(user.name) : 'SV'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Camera className="h-8 w-8 text-white" />
-                </div>
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  className="hidden" 
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">Click to upload new picture</p>
+              <Avatar className="h-24 w-24 border-2 border-border transition-colors">
+                <AvatarFallback className="bg-[#B91C1C] text-white text-3xl font-medium">
+                  {user?.name ? getInitials(user.name) : 'SV'}
+                </AvatarFallback>
+              </Avatar>
             </div>
 
             <div className="space-y-4">
@@ -182,27 +170,6 @@ export default function Profile() {
 
               <Separator className="my-2" />
               
-              <div className="grid gap-2">
-                <Label htmlFor="oldPassword">Old Password</Label>
-                <div className="relative">
-                  <Input 
-                    id="oldPassword" 
-                    type={showPassword ? "text" : "password"} 
-                    value={oldPassword}
-                    onChange={(e) => setOldPassword(e.target.value)}
-                    placeholder="Enter current password to change"
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-
               <div className="grid gap-2">
                 <Label htmlFor="password">New Password</Label>
                 <div className="relative">

@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Grid, List, Library, Upload, Search } from 'lucide-react';
+import { Grid, List, Library, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { MaterialCard } from '@/components/archive/MaterialCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { UploadModal, UploadType } from '@/components/archive/UploadModal';
 import { MaterialItem } from '@/data/mockData';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { api } from '@/lib/api';
@@ -15,22 +14,16 @@ export default function MyLibrary() {
   const [materials, setMaterials] = useState<MaterialItem[]>([]);
   const [pqs, setPQs] = useState<MaterialItem[]>([]);
   const [activeTab, setActiveTab] = useState('materials');
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [level, setLevel] = useState('');
-  const [department, setDepartment] = useState('');
-  const [courseName, setCourseName] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadType, setUploadType] = useState<UploadType>('materials');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchMyLibrary = async () => {
       try {
         setIsLoading(true);
-        const response = await api.get('/material');
+        const response = await api.get('/material/user');
         const data = response.data.data || response.data;
+        console.log('API Response:', data);
         
         if (Array.isArray(data)) {
           const mappedItems: MaterialItem[] = data.map((m: any) => ({
@@ -67,57 +60,6 @@ export default function MyLibrary() {
     pq.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleLibrarySubmit = async () => {
-    if (!level || !department || !courseName || !selectedFile) {
-      toast.error('Please select level, department, enter course name, and choose a file.');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('title', courseName);
-    formData.append('level', level);
-    formData.append('group', department);
-    formData.append('materialType', uploadType === 'materials' ? 'notes' : 'pq');
-    formData.append('file', selectedFile);
-
-    setIsUploading(true);
-    try {
-      const response = await api.post('/material/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      const m = response.data.data || response.data;
-      const newItem: MaterialItem = {
-        id: m.id || `new-${Date.now()}`,
-        title: m.title || courseName,
-        type: (m.type?.toLowerCase() || (selectedFile.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx')) as 'pdf' | 'docx',
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        size: m.fileSize ? `${(m.fileSize / (1024 * 1024)).toFixed(1)} MB` : `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`,
-        materialType: uploadType === 'materials' ? 'notes' : 'pq'
-      };
-
-      if (uploadType === 'materials') {
-        setMaterials([newItem, ...materials]);
-      } else {
-        setPQs([newItem, ...pqs]);
-      }
-      
-      toast.success(`Uploaded to ${uploadType === 'materials' ? 'My Materials' : 'My Past Questions'}`);
-      setUploadOpen(false);
-      setLevel('');
-      setDepartment('');
-      setCourseName('');
-      setSelectedFile(null);
-    } catch (error) {
-      console.error('Upload failed', error);
-      toast.error('Failed to upload material');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Control Bar */}
@@ -140,41 +82,6 @@ export default function MyLibrary() {
             <List className="h-4 w-4" />
           </Button>
         </div>
-        <Button 
-          className="hidden md:flex gap-2 bg-accent hover:bg-accent/90 text-accent-foreground whitespace-nowrap"
-          onClick={() => {
-            setUploadOpen(true);
-            setUploadType(activeTab as UploadType);
-          }}
-        >
-          <Upload className="h-4 w-4" />
-          Upload New
-        </Button>
-        <Button
-          className="md:hidden fixed bottom-24 right-6 z-50 shadow-lg bg-accent hover:bg-accent/90 text-accent-foreground"
-          onClick={() => {
-            setUploadOpen(true);
-            setUploadType(activeTab as UploadType);
-          }}
-        >
-          <Upload className="h-4 w-4 mr-2" />
-          Upload
-        </Button>
-        <UploadModal
-          open={uploadOpen}
-          onOpenChange={setUploadOpen}
-          onSubmit={handleLibrarySubmit}
-          level={level}
-          setLevel={setLevel}
-          group={department}
-          setGroup={setDepartment}
-          courseName={courseName}
-          setCourseName={setCourseName}
-          materialType={uploadType}
-          setMaterialType={setUploadType}
-          onFileSelect={(files) => setSelectedFile(files[0] || null)}
-          isLoading={isUploading}
-        />
       </div>
 
       {/* Mobile Navigation Row - Removed */}
@@ -212,9 +119,9 @@ export default function MyLibrary() {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-border rounded-xl">
               <Library className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium text-foreground">No materials uploaded</h3>
+              <h3 className="text-lg font-medium text-foreground">No materials found</h3>
               <p className="text-muted-foreground mt-1 max-w-sm">
-                You haven't uploaded any study materials yet. Click "Upload New" to get started.
+                You haven't saved or uploaded any study materials yet.
               </p>
             </div>
           )}
@@ -236,9 +143,9 @@ export default function MyLibrary() {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-border rounded-xl">
               <Library className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium text-foreground">No past questions uploaded</h3>
+              <h3 className="text-lg font-medium text-foreground">No past questions found</h3>
               <p className="text-muted-foreground mt-1 max-w-sm">
-                You haven't uploaded any past questions yet. Click "Upload New" to get started.
+                You haven't saved or uploaded any past questions yet.
               </p>
             </div>
           )}

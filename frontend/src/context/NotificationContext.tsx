@@ -5,8 +5,8 @@ export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning';
-  timestamp: Date;
+  type: 'INFO' | 'SUCCESS' | 'WARNING';
+  createdAt: string;
   read: boolean;
 }
 
@@ -30,16 +30,16 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       const response = await api.get('/notification');
-      const data = response.data.data || response.data;
+      const data = response.data.data;
       
       if (Array.isArray(data)) {
         const mapped: Notification[] = data.map((n: any) => ({
           id: n.id,
           title: n.title,
           message: n.message,
-          type: (n.type?.toLowerCase() || 'info') as 'info' | 'success' | 'warning',
-          timestamp: new Date(n.createdAt || n.timestamp),
-          read: !!n.read || !!n.isRead
+          type: n.type || 'INFO',
+          createdAt: n.createdAt,
+          read: !!n.read
         }));
         setNotifications(mapped);
       }
@@ -58,11 +58,11 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+  const addNotification = (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => {
     const newNotification: Notification = {
       ...notification,
       id: Date.now().toString(),
-      timestamp: new Date(),
+      createdAt: new Date().toISOString(),
       read: false,
     };
     setNotifications(prev => [newNotification, ...prev]);
