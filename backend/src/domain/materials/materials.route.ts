@@ -10,12 +10,13 @@ import upload from '../../shared/utils/fileUpload';
 // All routes require authentication
 materialRouter.use(authenticate);
 
+
+// Get all user materials
+materialRouter.get('/user', (req, res) => materialController.getUserMaterials(req, res));
+
 // Upload file (PDF, DOC, DOCX, TXT, Image)
 materialRouter.post('/upload', upload.single('file'), (req, res) => materialController.uploadFile(req, res));
 
-
-// Get all user materials
-materialRouter.get('/', (req, res) => materialController.getUserMaterials(req, res));
 
 // 1. Static/Search Routes (Place these ABOVE parameterized routes)
 materialRouter.get('/all', (req, res) => materialController.getAllMaterials(req, res));
@@ -27,6 +28,8 @@ materialRouter.get('/schools', (req, res) => materialController.getSchools(req, 
 materialRouter.get('/groups', (req, res) => materialController.getGroups(req, res));
 materialRouter.get('/levels', (req, res) => materialController.getLevels(req, res));
 materialRouter.get('/materialTypes', (req, res) => materialController.getMaterialTypes(req, res));
+
+
 
 
 // 3. ID Specific Routes (Keep these at the bottom)

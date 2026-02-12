@@ -1639,6 +1639,143 @@ const document = {
             }
           }
         }
+      },
+      put: {
+        tags: ['Authentication'],
+        summary: 'Edit user profile',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  school: { type: 'string' }
+                }
+              }
+           }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Profile updated successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/UserProfile' }
+              }
+            }
+          },
+          '401': { description: 'Unauthorized' }
+        }
+      }
+    },
+    '/auth/forgot-password': {
+      get: {
+        tags: ['Authentication'],
+        summary: 'Send password reset email',
+        description: 'Send password reset email to update user password',
+        security: [
+          {
+            bearerAuth: []
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email'],
+                properties: {
+                  email: { type: 'string', format: 'email' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Reset email sent',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/UserProfile'
+                }
+              }
+            }
+          },
+          '404': {
+            description: 'User not found',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse'
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/auth/reset-password': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Reset user password',
+        description: 'Reset user password using unique tokeb',
+        security: [
+          {
+            bearerAuth: []
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['token', 'newPassword'],
+                properties: {
+                  token: { type: 'string' },
+                  newPassword: { type: 'string' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Password reset successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/UserProfile'
+                }
+              }
+            }
+          },
+          '400': {
+            description: 'Invalid or expired token',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse'
+                }
+              }
+            }
+          },
+          '404': {
+            description: 'User not found',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse'
+                }
+              }
+            }
+          }
+        }
       }
     },
     '/studyplan': {
@@ -2170,7 +2307,7 @@ const document = {
         }
       }
     },
-    '/material': {
+    '/material/user': {
       get: {
         tags: ['Materials'],
         summary: 'Get user materials',
@@ -2182,12 +2319,12 @@ const document = {
         ],
         parameters: [
           {
-            name: 'archived',
+            name: 'materialType',
             in: 'query',
-            description: 'Filter by archived status',
+            description: 'Filter by materialTypes',
             required: false,
             schema: {
-              type: 'boolean'
+              type: 'string'
             }
           },
           {
@@ -2297,7 +2434,25 @@ const document = {
             schema: {
               type: 'string'
             }
-          }
+          },
+          {
+            name: 'page',
+            in: 'query',
+            required: true,
+            description: 'Pagination',
+            schema: {
+              type: 'string'
+            }
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            required: true,
+            description: 'Pagination',
+            schema: {
+              type: 'string'
+            }
+          },
         ],
         responses: {
           '200': {

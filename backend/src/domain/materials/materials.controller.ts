@@ -81,8 +81,7 @@ class MaterialController {
         return;
       }
 
-      const { archived, group, materialType } = req.query;
-      const archivedBool = archived === 'true' ? true : archived === 'false' ? false : undefined;
+      const { group, materialType } = req.query;
       const groupStr = group ? (group as string) : '';
       const materialTypeStr = materialType ? (materialType as string) : '';
 
@@ -90,7 +89,6 @@ class MaterialController {
         req.user.userId,
         groupStr,
         materialTypeStr,
-        archivedBool
       );
 
       res.status(200).json({
@@ -317,18 +315,15 @@ class MaterialController {
   async searchMaterials(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { q } = req.query;
+      const page = Number(req.query.page)
+      const limit = Number(req.query.limit)
 
       if (!q || typeof q !== 'string') {
         res.status(400).json({ error: 'Search query is required' });
         return;
       }
 
-      if (!req.user?.userId) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
-
-      const materials = await materialService.searchMaterials(req.user.userId, q);
+      const materials = await materialService.searchMaterials(q, page, limit);
 
       res.status(200).json({
         success: true,

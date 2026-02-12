@@ -142,22 +142,17 @@ class MaterialService {
     return material;
   }
 
-  async getUserMaterials(userId: string, group: string, materialType: string, archived?: boolean) {
+  async getUserMaterials(userId: string, group: string, materialType: string) {
     const where: any = { userId };
-
-    if (typeof archived === 'boolean') {
-      where.archived = archived;
-    }
-
 
     if (materialType) {
       where.materialType = materialType;
     }
 
     if (group && group.length > 0) {
-      where.group = {
-        hasSome: group
-      };
+      if (group) {
+        where.group = group;
+      }
     }
 
     const materials = await prisma.material.findMany({
@@ -172,7 +167,8 @@ class MaterialService {
         fileUrl: true,
         fileSize: true,
         archived: true,
-        tags: true,
+        materialType: true,
+        group: true,
         uploadedAt: true,
         lastAccessedAt: true,
         _count: {
@@ -361,46 +357,69 @@ class MaterialService {
     return { message: 'Material deleted successfully' };
   }
 
-  async searchMaterials(userId: string, query: string) {
-    const materials = await prisma.material.findMany({
-      where: {
-        userId,
-        OR: [
-          {
-            title: {
-              contains: query,
-              mode: 'insensitive'
-            }
-          },
-          {
-            content: {
-              contains: query,
-              mode: 'insensitive'
-            }
-          },
-          {
-            group: {
-              contains: query,
-              mode: 'insensitive'
-            }
-          }
-        ]
-      },
-      orderBy: {
-        lastAccessedAt: 'desc'
-      },
-      select: {
-        id: true,
-        title: true,
-        type: true,
-        group: true,
-        uploadedAt: true,
-        archived: true
-      }
-    });
+  async searchMaterials(query: string, page: number = 1, limit: number = 10) {
+  if (!query?.trim()) return [];
 
-    return materials;
-  }
+  const skip = (page - 1) * limit;
+
+  const materials = await prisma.material.findMany({
+    where: {
+      OR: [
+        { title: { contains: query } },
+        { content: { contains: query } },
+        { group: { contains: query } }
+      ]
+    },
+    orderBy: {
+      lastAccessedAt: 'desc'
+    },
+    skip,
+    take: limit,
+    select: {
+      id: true,
+      title: true,
+      group: true,
+      materialType: true,
+      archived: true,
+      uploadedAt: true,
+      lastAccessedAt: true,
+      content: true // needed only for snippet generation
+    }
+  });
+
+  return materials.map((material) => {
+    let snippet: string | null = null;
+
+    if (material.content) {
+      const lowerContent = material.content.toLowerCase();
+      const lowerQuery = query.toLowerCase();
+      const index = lowerContent.indexOf(lowerQuery);
+
+      if (index !== -1) {
+        const start = Math.max(index - 50, 0);
+        const end = Math.min(
+          index + query.length + 50,
+          material.content.length
+        );
+
+        snippet = material.content.slice(start, end);
+      }
+    }
+
+    return {
+      id: material.id,
+      title: material.title,
+      group: material.group,
+      materialType: material.materialType,
+      archived: material.archived,
+      uploadedAt: material.uploadedAt,
+      lastAccessedAt: material.lastAccessedAt,
+      snippet
+    };
+  });
+}
+
+
 
   async getMaterialStats(userId: string) {
     const [total, archived, byType] = await Promise.all([
