@@ -21,11 +21,7 @@ export default function ForgotPassword() {
 
     setIsSubmitting(true);
     try {
-      // In a real app, you would call your API here
-      // await api.post('/auth/forgot-password', { email });
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await api.post('/auth/forgot-password', { email });
       
       setIsSent(true);
       toast.success('Reset link sent to your email');

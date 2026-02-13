@@ -12,7 +12,6 @@ import { api } from '@/lib/api';
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -24,11 +23,11 @@ export default function ResetPassword() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
+    if (!token) {
+      toast.error('Invalid or missing reset token. Please request a new link.');
       return;
     }
-
+    
     if (password.length < 8) {
       toast.error('Password must be at least 8 characters long');
       return;
@@ -36,11 +35,7 @@ export default function ResetPassword() {
 
     setIsSubmitting(true);
     try {
-      // In a real app, you would call your API here
-      // await api.post('/auth/reset-password', { token, password });
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await api.post('/auth/reset-password', { token, password });
       
       setIsSuccess(true);
       toast.success('Password reset successfully');
@@ -122,22 +117,7 @@ export default function ResetPassword() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <div className="relative">
-                <Input 
-                  id="confirmPassword" 
-                  type={showPassword ? "text" : "password"} 
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required 
-                  className="pl-10"
-                />
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              </div>
-            </div>
-
-            <Button type="submit" className="w-full" variant="accent" disabled={isSubmitting || !token}>
+            <Button type="submit" className="w-full" variant="accent" disabled={isSubmitting}>
               {isSubmitting ? 'Resetting password...' : 'Reset password'}
             </Button>
             
