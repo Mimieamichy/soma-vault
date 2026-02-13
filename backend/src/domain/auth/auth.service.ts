@@ -137,7 +137,6 @@ class AuthService {
     return user;
   }
 
-
   async editProfile(userId: string, data: { name?: string; school?: string }) {
     const user = await prisma.user.findUnique({
       where: { id: userId }
@@ -231,7 +230,6 @@ class AuthService {
     return { message: "Reset link sent to email" };
   }
 
-
   async resetPassword(token: string, newPassword: string) {
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
@@ -261,7 +259,6 @@ class AuthService {
 
     return { message: "Password reset successful" };
   }
-
 
 
   generateToken(userId: string, role: string): string {

@@ -83,10 +83,7 @@ class StudyPlanController {
       materialType: materialType
     });
 
-      res.status(201).json({
-        success: true,
-        data: result
-      });
+      res.status(201).json({success: true, data: result});
     } catch (error) {
       res.status(400).json({
         success: false,

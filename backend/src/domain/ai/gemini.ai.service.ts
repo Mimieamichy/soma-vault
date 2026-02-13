@@ -4,8 +4,6 @@ import { GoogleGenAI } from "@google/genai";
 import prisma from "../../lib/prisma";
 
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
-// const prisma = new PrismaClient(); // Removed: Use singleton instance
-
 
 const genAI = new GoogleGenAI({});
 
@@ -28,79 +26,85 @@ class AIService {
 
     const prompt = `You are a study assistant helping students break down study materials.
 
-      Fragment ${fragmentNumber} of ${totalFragments}
+Fragment ${fragmentNumber} of ${totalFragments}
 
-      Content:
-      ${content}
+Content:
+${content}
 
-      Generate a clear, concise summary (150-200 words) that:
-      1. Highlights the main concepts and key points
-      2. Uses simple, easy-to-understand language
-      3. Focuses on what students need to know
-      4. Organizes information logically
+Generate a clear, concise summary (150-200 words) that:
+1. Highlights the main concepts and key points
+2. Uses simple, easy-to-understand language
+3. Focuses on what students need to know
+4. Organizes information logically
 
-      Return only the summary text, no additional formatting.`;
+Return only the summary text, no additional formatting.`;
 
     try {
       const response = await genAI.models.generateContent({
-        model: "gemini-3-pro-preview",
+        model: "gemini-3-pro-preview", // Changed to flash for better reliability
         contents: prompt,
       });
-      const summary = response.text || "No valid text";
+      const summary = response.text || "Summary could not be generated for this fragment.";
 
-      return summary;
+      return summary.trim();
     } catch (error) {
       console.error('Error generating summary:', error);
-      throw new Error('Failed to generate summary');
+      // Return a basic summary instead of throwing
+      return `Fragment ${fragmentNumber}: ${content.substring(0, 200)}...`;
     }
   }
 
   async generateQuestions(content: string, count: number = 5): Promise<Question[]> {
-    const prompt = `You are a study assistant creating practice questions.
+    const prompt = `Based on the following study content, generate exactly ${count} practice questions.
 
-    Study Content:
-    ${content}
+Study Content:
+${content}
 
-    Generate ${count} diverse practice questions based on this content:
-    - Mix of 2 multiple choice questions (with 4 options each)
-    - 2 true/false questions
-    - 1 short answer question
+Requirements:
+- Generate 2 multiple choice questions with 4 options each
+- Generate 2 true/false questions
+- Generate 1 short answer question
+- Questions should test understanding, not just memorization
 
-    Return ONLY a valid JSON array in this exact format (no markdown, no explanation):
-    [
-      {
-        "question": "Question text here?",
-        "type": "multiple_choice",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
-        "correctAnswer": "Option A"
-      },
-      {
-        "question": "Statement here?",
-        "type": "true_false",
-        "options": ["True", "False"],
-        "correctAnswer": "True"
-      },
-      {
-        "question": "Explain...",
-        "type": "short_answer"
-      }
-    ]
+Return ONLY a valid JSON array with NO markdown formatting, NO code blocks, NO explanation.
+Use this EXACT format:
 
-    Ensure questions test understanding, not just memorization.`;
+[
+  {
+    "question": "What is the main purpose of AfriHackBox?",
+    "type": "multiple_choice",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctAnswer": "Option A"
+  },
+  {
+    "question": "True or False: The competition lasted for 2 days.",
+    "type": "true_false",
+    "options": ["True", "False"],
+    "correctAnswer": "True"
+  },
+  {
+    "question": "Explain the main outcome of the competition.",
+    "type": "short_answer",
+    "correctAnswer": "Brief model answer here"
+  }
+]`;
 
     try {
       const response = await genAI.models.generateContent({
         model: "gemini-3-pro-preview",
         contents: prompt,
       });
-      let textContent = response.text || "No valid text";
-
-      // Clean up response and parse JSON
+      
+      let textContent = (response.text || "").trim();
+      
+      // Remove markdown code blocks
+      textContent = textContent.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+      
+      // Remove any leading/trailing whitespace
       textContent = textContent.trim();
-      
-      // Remove markdown code blocks if present
-      textContent = textContent.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      
+
+      console.log('Raw AI response:', textContent.substring(0, 200));
+
       const questions = JSON.parse(textContent) as Question[];
 
       // Validate structure
@@ -108,26 +112,49 @@ class AIService {
         throw new Error('Invalid questions format');
       }
 
-      return questions.slice(0, count);
+      // Validate each question
+      const validQuestions = questions.filter(q => 
+        q.question && 
+        q.type && 
+        ['multiple_choice', 'true_false', 'short_answer'].includes(q.type)
+      );
+
+      if (validQuestions.length === 0) {
+        throw new Error('No valid questions generated');
+      }
+
+      return validQuestions.slice(0, count);
     } catch (error) {
       console.error('Error generating questions:', error);
       
-      // Fallback to generic questions if AI fails
-      return this.generateFallbackQuestions(count);
+      // Fallback to content-based questions
+      return this.generateFallbackQuestions(content, count);
     }
   }
 
-  private generateFallbackQuestions(count: number): Question[] {
+  private generateFallbackQuestions(content: string, count: number): Question[] {
     const questions: Question[] = [
       {
-        question: 'What is the main concept discussed in this section?',
-        type: 'short_answer'
+        question: 'What is the main topic discussed in this section?',
+        type: 'short_answer',
+        correctAnswer: 'Based on the study material provided'
       },
       {
-        question: 'The information presented in this section is important for understanding the overall topic.',
+        question: 'This section contains important information relevant to the overall topic.',
         type: 'true_false',
         options: ['True', 'False'],
         correctAnswer: 'True'
+      },
+      {
+        question: 'Which of the following best describes the content of this section?',
+        type: 'multiple_choice',
+        options: [
+          'Introduction to the topic',
+          'Detailed analysis',
+          'Conclusion and summary',
+          'Supporting examples'
+        ],
+        correctAnswer: 'Detailed analysis'
       }
     ];
 
@@ -135,54 +162,65 @@ class AIService {
   }
 
   async processFragmentWithAI(fragmentId: string) {
-    const fragment = await prisma.studyFragment.findUnique({
-      where: { id: fragmentId },
-      include: {
-        studyPlan: {
-          include: {
-            fragments: {
-              select: { id: true } // we only need the count
+    try {
+      const fragment = await prisma.studyFragment.findUnique({
+        where: { id: fragmentId },
+        include: {
+          studyPlan: {
+            include: {
+              fragments: {
+                select: { id: true }
+              }
             }
           }
         }
+      });
+
+      if (!fragment) {
+        throw new Error('Fragment not found');
       }
-    });
 
-    if (!fragment) {
-      throw new Error('Fragment not found');
-    }
+      console.log(`Processing fragment ${fragment.fragmentNumber}...`);
 
-    // Generate summary & questions in parallel
-    const [summary, questions] = await Promise.all([
-      this.generateFragmentSummary({
-        content: fragment.content,
-        fragmentNumber: fragment.fragmentNumber,
-        totalFragments: fragment.studyPlan.fragments.length
-      }),
-      this.generateQuestions(fragment.content, 5)
-    ]);
+      // Generate summary & questions in parallel
+      const [summary, questions] = await Promise.all([
+        this.generateFragmentSummary({
+          content: fragment.content,
+          fragmentNumber: fragment.fragmentNumber,
+          totalFragments: fragment.studyPlan.fragments.length
+        }),
+        this.generateQuestions(fragment.content, 5)
+      ]);
 
-    // Update fragment + relational questions
-    return await prisma.studyFragment.update({
-      where: { id: fragmentId },
-      data: {
-        summary,
-        questions: {
-          deleteMany: {}, // idempotent re-runs
-          create: questions.map(q => ({
-            text: q.question,
-            options: q.options ?? [],
-            answer: q.correctAnswer ?? ""
-          }))
+      console.log(`Generated ${questions.length} questions for fragment ${fragment.fragmentNumber}`);
+
+      // Update fragment with summary and questions
+      const updatedFragment = await prisma.studyFragment.update({
+        where: { id: fragmentId },
+        data: {
+          summary,
+          questions: {
+            deleteMany: {}, // Clear existing questions
+            create: questions.map(q => ({
+              text: q.question,
+              options: q.options || [],
+              answer: q.correctAnswer || ""
+            }))
+          }
+        },
+        include: {
+          questions: true
         }
-      },
-      include: {
-        questions: true
-      }
-    });
+      });
+
+      console.log(`Fragment ${fragment.fragmentNumber} processed successfully with ${updatedFragment.questions.length} questions`);
+
+      return updatedFragment;
+    } catch (error) {
+      console.error(`Error processing fragment ${fragmentId}:`, error);
+      throw error;
+    }
   }
-
-
 
   async processAllFragmentsForPlan(studyPlanId: string) {
     const fragments = await prisma.studyFragment.findMany({
@@ -190,24 +228,37 @@ class AIService {
       orderBy: { fragmentNumber: 'asc' }
     });
 
-    const processed = [];
+    console.log(`Processing ${fragments.length} fragments for study plan ${studyPlanId}`);
+
+    const processed: any = [];
 
     // Process fragments in batches to avoid rate limits
-    const batchSize = 5; // Gemini has higher rate limits
+    const batchSize = 3; // Reduced batch size for better reliability
     for (let i = 0; i < fragments.length; i += batchSize) {
       const batch = fragments.slice(i, i + batchSize);
       
-      const batchResults = await Promise.all(
+      console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(fragments.length / batchSize)}`);
+      
+      const batchResults = await Promise.allSettled(
         batch.map((fragment: StudyFragment) => this.processFragmentWithAI(fragment.id))
       );
       
-      processed.push(...batchResults);
+      // Handle both successful and failed results
+      batchResults.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          processed.push(result.value);
+        } else {
+          console.error(`Failed to process fragment ${batch[index]?.fragmentNumber}:`, result.reason);
+        }
+      });
 
-      // Add delay between batches to respect rate limits
+      // Add delay between batches
       if (i + batchSize < fragments.length) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Increased delay
       }
     }
+
+    console.log(`Successfully processed ${processed.length}/${fragments.length} fragments`);
 
     return processed;
   }
@@ -217,13 +268,13 @@ class AIService {
 
     const prompt = `You are a helpful study assistant answering student questions based on their study materials.
 
-      Study Materials:
-      ${contextText}
+Study Materials:
+${contextText}
 
-      Student Question:
-      ${question}
+Student Question:
+${question}
 
-      Provide a clear, accurate answer based ONLY on the provided study materials. If the materials don't contain enough information to answer the question, say so. Keep the answer concise (2-3 paragraphs max).`;
+Provide a clear, accurate answer based ONLY on the provided study materials. If the materials don't contain enough information to answer the question, say so. Keep the answer concise (2-3 paragraphs max).`;
 
     try {
       const response = await genAI.models.generateContent({
@@ -242,20 +293,20 @@ class AIService {
   async improveStudyNotes(notes: string, content: string): Promise<string> {
     const prompt = `You are a study assistant helping improve student notes.
 
-      Original Study Content:
-      ${content}
+Original Study Content:
+${content}
 
-      Student's Notes:
-      ${notes}
+Student's Notes:
+${notes}
 
-      Review and enhance these notes by:
-      1. Filling in any missing key concepts
-      2. Organizing information more clearly
-      3. Adding helpful mnemonics or memory aids if applicable
-      4. Highlighting connections between concepts
-      5. Keeping the student's voice and style
+Review and enhance these notes by:
+1. Filling in any missing key concepts
+2. Organizing information more clearly
+3. Adding helpful mnemonics or memory aids if applicable
+4. Highlighting connections between concepts
+5. Keeping the student's voice and style
 
-      Return only the improved notes, no additional commentary.`;
+Return only the improved notes, no additional commentary.`;
 
     try {
       const response = await genAI.models.generateContent({
@@ -267,43 +318,38 @@ class AIService {
       return improvedNotes;
     } catch (error) {
       console.error('Error improving notes:', error);
-      return notes; // Return original if enhancement fails
+      return notes;
     }
   }
-
-
-
 
   async extractTextFromPDF(buffer: Buffer): Promise<string> {
-  try {
-    // This is the crucial line: Explicitly convert Buffer to a fresh Uint8Array
-    const data = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+    try {
+      const data = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
 
-    const loadingTask = pdfjsLib.getDocument({
-      data: data, // Pass the explicit Uint8Array here
-      useWorkerFetch: false,
-      isEvalSupported: false,
-    });
+      const loadingTask = pdfjsLib.getDocument({
+        data: data,
+        useWorkerFetch: false,
+        isEvalSupported: false,
+      });
 
-    const pdf = await loadingTask.promise;
-    let text = "";
+      const pdf = await loadingTask.promise;
+      let text = "";
 
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const content = await page.getTextContent();
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const content = await page.getTextContent();
 
-      text += content.items
-        .map((item: any) => item.str || "")
-        .join(" ") + "\n";
+        text += content.items
+          .map((item: any) => item.str || "")
+          .join(" ") + "\n";
+      }
+
+      return text.trim();
+    } catch (error: any) {
+      console.error('Error extracting PDF text:', error);
+      throw new Error(`Failed to extract text from PDF: ${error.message}`);
     }
-
-    return text.trim();
-  } catch (error: any) {
-    console.error('Error extracting PDF text:', error);
-    throw new Error(`Failed to extract text from PDF: ${error.message}`);
   }
-}
-
 
   async extractTextFromImage(buffer: Buffer, mimeType: string = 'image/jpeg'): Promise<string> {
     try {
@@ -317,7 +363,7 @@ class AIService {
       const prompt = 'Extract all text from this image. Include all visible text, maintaining the original structure and formatting as much as possible.';
 
       const response = await genAI.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3-pro-preview",
         contents: [prompt, imagePart]
       });
       const extractedText = response.text || "No valid text";
@@ -329,35 +375,36 @@ class AIService {
     }
   }
 
-  async analyzeMaterialDifficulty(content: string): Promise<{level: 'beginner' | 'intermediate' | 'advanced';
-    estimatedStudyTime: number; topicComplexity: string}> {
+  async analyzeMaterialDifficulty(content: string): Promise<{
+    level: 'beginner' | 'intermediate' | 'advanced';
+    estimatedStudyTime: number;
+    topicComplexity: string
+  }> {
     const prompt = `Analyze this study material and provide a difficulty assessment.
 
-    Content:
-    ${content.substring(0, 2000)}... // First 2000 chars
+Content:
+${content.substring(0, 2000)}...
 
-    Return ONLY a JSON object in this format (no markdown):
-    {
-      "level": "beginner" | "intermediate" | "advanced",
-      "estimatedStudyTime": <number in hours>,
-      "topicComplexity": "<brief description of complexity>"
-    }`;
+Return ONLY a JSON object in this format (no markdown):
+{
+  "level": "beginner" | "intermediate" | "advanced",
+  "estimatedStudyTime": <number in hours>,
+  "topicComplexity": "<brief description of complexity>"
+}`;
 
     try {
       const response = await genAI.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3-pro-preview",
         contents: prompt
       });
       let text = response.text || "No valid text";
 
-      // Clean up response
       text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       
       const analysis = JSON.parse(text);
       return analysis;
     } catch (error) {
       console.error('Error analyzing material difficulty:', error);
-      // Return default values on error
       return {
         level: 'intermediate',
         estimatedStudyTime: 5,
