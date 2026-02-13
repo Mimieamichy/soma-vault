@@ -105,10 +105,6 @@ class AuthController {
 
   async forgotPassword(req: AuthRequest, res: Response): Promise<void> {
     try {
-        if (!req.user?.userId) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
 
       const {email} = req.body
       
@@ -123,10 +119,6 @@ class AuthController {
 
   async resetPassword(req: AuthRequest, res: Response): Promise<void> {
     try {
-        if (!req.user?.userId) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
       
       const {newPassword} = req.body
       const token = req.query.token

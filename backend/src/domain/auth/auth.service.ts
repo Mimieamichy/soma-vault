@@ -293,7 +293,7 @@ class AuthService {
     });
 
     const mailOptions = {
-      from: `"Study Vault" <${process.env.GMAIL_USER}>`,
+      from: `"SomaVault" <${process.env.GMAIL_USER}>`,
       to,
       subject,
       html

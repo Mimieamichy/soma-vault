@@ -167,6 +167,8 @@ class MaterialService {
         fileUrl: true,
         fileSize: true,
         archived: true,
+        content: true,
+        level: true,
         materialType: true,
         group: true,
         uploadedAt: true,
