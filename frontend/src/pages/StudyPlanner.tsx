@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Calendar, Clock, BookOpen, Plus, Upload, Sparkles, Trophy, Target } from 'lucide-react';
 import { StudyPlanForm } from '@/components/planner/StudyPlanForm';
 import { FragmentCard } from '@/components/planner/FragmentCard';
@@ -98,6 +98,51 @@ export default function StudyPlanner() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  useEffect(() => {
+    const loadPlans = async () => {
+      try {
+        const res = await api.get('/studyplan');
+        console.log('GET /studyplan response:', res);
+        const raw = res.data?.data || res.data || [];
+        console.log('GET /studyplan raw payload:', raw);
+        if (Array.isArray(raw)) {
+          const mapped: StudyPlan[] = raw.map((p: any) => ({
+            id: p.id,
+            group: p.group || p.courseGroup || '',
+            title: p.title || p.courseTitle || '',
+            level: p.level || '',
+            studyFrequency: p.studyFrequency || 'WEEKLY',
+            duration: String(p.duration || 1),
+            startDate: p.startDate ? new Date(p.startDate) : new Date(),
+            fragments: Array.isArray(p.fragments) ? p.fragments.map((f: any) => ({
+              id: f.id || String(Math.random()),
+              title: f.title || 'Session',
+              summary: f.summary || '',
+              questions: Array.isArray(f.questions) ? f.questions : [],
+              isCompleted: !!f.isCompleted,
+              date: f.date || ''
+            })) : [],
+            files: [],
+            createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
+            priority: p.priority || 'medium',
+            archived: !!p.archived,
+            subject: p.subject,
+            materialType: p.materialType
+          }));
+          console.log('Mapped study plans:', mapped);
+          setStudyPlans(mapped);
+          if (mapped.length > 0) {
+            setCurrentPlanId(mapped[0].id);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load study plans:', error);
+        toast.error('Could not load your study plans');
+      }
+    };
+    loadPlans();
+  }, []);
+
   const handleCreatePlan = async (data: { 
     group: string;
     title: string; 
@@ -112,7 +157,7 @@ export default function StudyPlanner() {
     try {
       const formData = new FormData();
       if (data.files.length > 0) {
-        formData.append('file', data.files[0]);
+        formData.append('studyPlan', data.files[0]);
       }
       formData.append('title', data.title);
       // Assuming duration is in months, converting to approximate days
@@ -168,6 +213,20 @@ export default function StudyPlanner() {
       }
       return plan;
     }));
+    api.post(`/studyplan/fragment/${id}/complete`).catch(() => {
+      setStudyPlans(prev => prev.map(plan => {
+        if (plan.id === currentPlanId) {
+          return {
+            ...plan,
+            fragments: plan.fragments.map(f => 
+              f.id === id ? { ...f, isCompleted: !f.isCompleted } : f
+            ),
+          };
+        }
+        return plan;
+      }));
+      toast.error('Failed to update fragment status');
+    });
   };
 
   const handleSaveFragment = (id: string, summary: string, questions: string[]) => {
