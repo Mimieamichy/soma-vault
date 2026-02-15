@@ -74,8 +74,11 @@ export function StudyPlanForm({ onSubmit, isLoading = false }: StudyPlanFormProp
   }, []);
 
   const handleFileUpload = (uploaded: File[]) => {
-    setFiles(prev => [...prev, ...uploaded]);
-    toast.success(`Attached ${uploaded.length} file(s)`);
+    const first = uploaded[0];
+    if (first) {
+      setFiles([first]);
+      toast.success('Attached 1 file');
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -118,7 +121,7 @@ export function StudyPlanForm({ onSubmit, isLoading = false }: StudyPlanFormProp
       {/* Upload Material */}
       <div className="space-y-2">
         <Label>Study Material</Label>
-        <UploadZone onFileSelect={handleFileUpload} />
+        <UploadZone onFileSelect={handleFileUpload} multiple={false} />
         {files.length > 0 && (
           <div className="mt-2 space-y-1">
             {files.map((file, i) => (
