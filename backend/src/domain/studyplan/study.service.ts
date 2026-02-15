@@ -85,12 +85,11 @@ class StudyPlanService {
     console.log(`Generated ${fragments.length} fragments`);
 
     // Process fragments with AI
-    let processedFragments = [];
     let aiProcessed = false;
     
     try {
       console.log('Starting AI processing...');
-      processedFragments = await geminiAiService.processAllFragmentsForPlan(studyPlan.id);
+      const processedFragments = await geminiAiService.processAllFragmentsForPlan(studyPlan.id);
       aiProcessed = processedFragments.length > 0;
       console.log(`AI processing complete: ${processedFragments.length} fragments processed`);
     } catch (error) {
@@ -140,7 +139,7 @@ class StudyPlanService {
     console.log(`Material uploaded: ${uploadedMaterial.id}`);
 
     // Create study plan using the uploaded material
-    return await this.createStudyPlan({
+    const studyPlanResult = await this.createStudyPlan({
       userId,
       materialId: uploadedMaterial.id,
       title,
@@ -148,6 +147,45 @@ class StudyPlanService {
       studyFrequency,
       startDate
     });
+
+    // Return only the essential data
+    return {
+      studyPlan: {
+        id: studyPlanResult.completeStudyPlan.id,
+        title: studyPlanResult.completeStudyPlan.title,
+        totalDays: studyPlanResult.completeStudyPlan.totalDays,
+        studyFrequency: studyPlanResult.completeStudyPlan.studyFrequency,
+        startDate: studyPlanResult.completeStudyPlan.startDate,
+        endDate: studyPlanResult.completeStudyPlan.endDate,
+        status: studyPlanResult.completeStudyPlan.status,
+        createdAt: studyPlanResult.completeStudyPlan.createdAt,
+        updatedAt: studyPlanResult.completeStudyPlan.updatedAt
+      },
+      material: {
+        id: uploadedMaterial.id,
+        title: uploadedMaterial.title,
+        type: uploadedMaterial.type,
+        group: uploadedMaterial.group,
+        level: uploadedMaterial.level,
+        materialType: uploadedMaterial.materialType
+      },
+      fragments: studyPlanResult.fragments.map(fragment => ({
+        id: fragment.id,
+        fragmentNumber: fragment.fragmentNumber,
+        summary: fragment.summary,
+        scheduledDate: fragment.scheduledDate,
+        questions: fragment.questions.map(q => ({
+          id: q.id,
+          text: q.text,
+          options: q.options,
+          answer: q.answer
+        }))
+      })),
+      stats: {
+        totalFragments: studyPlanResult.fragments.length,
+        aiProcessed: studyPlanResult.aiProcessed
+      }
+    };
   }
 
   async generateFragments(
