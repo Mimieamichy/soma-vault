@@ -189,7 +189,6 @@ class StudyPlanController {
     try {
       const { fragmentId } = req.params;
       const fragmentIdStr = Array.isArray(fragmentId) ? fragmentId[0] : fragmentId;
-      const { timeSpent, notes } = req.body;
 
       if (!req.user?.userId) {
         res.status(401).json({ error: 'Unauthorized' });
@@ -208,6 +207,7 @@ class StudyPlanController {
         data: progress
       });
     } catch (error) {
+      console.log(error)
       res.status(400).json({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to mark fragment complete'
