@@ -34,6 +34,45 @@ type StudyProgressItem = {
   timeSpent: number | null;
 };
 
+type StudyPlanResponse = {
+  studyPlan: {
+    id: string;
+    title: string;
+    totalDays: number;
+    studyFrequency: StudyFrequency;
+    startDate: Date;
+    endDate: Date;
+    status: PlanStatus;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  material: {
+    id: string;
+    title: string;
+    type: string;
+    group: string;
+    level: string;
+    materialType: string;
+  } | null;
+  fragments: {
+    id: string;
+    fragmentNumber: number;
+    summary: string;
+    scheduledDate: Date;
+    questions: {
+      id: string;
+      text: string;
+      options: any;
+      answer: string;
+    }[];
+  }[];
+  stats: {
+    totalFragments: number;
+    aiProcessed?: boolean;
+  };
+};
+
+
 type StudyFragmentItem = {
   id: string;
 } & Record<string, unknown>;
@@ -107,17 +146,7 @@ class StudyPlanService {
     };
   }
 
-  async createStudyPlanWithFileUpload(data: {
-    userId: string;
-    title: string;
-    totalDays: number;
-    studyFrequency: StudyFrequency;
-    startDate: Date;
-    file: Express.Multer.File;
-    group: string;
-    level: '100' | '200' | '300' | '400' | '500';
-    materialType: 'NOTES' | 'PQ';
-  }) {
+  async createStudyPlanWithFileUpload(data: {userId: string; title: string; totalDays: number; studyFrequency: StudyFrequency; startDate: Date; file: Express.Multer.File; group: string; level: '100' | '200' | '300' | '400' | '500'; materialType: 'NOTES' | 'PQ'}) : Promise<StudyPlanResponse>{
     const { userId, title, totalDays, studyFrequency, startDate, file, group, level, materialType } = data;
     
     if (!file) {
@@ -136,7 +165,6 @@ class StudyPlanService {
       materialType
     });
 
-    console.log(`Material uploaded: ${uploadedMaterial.id}`);
 
     // Create study plan using the uploaded material
     const studyPlanResult = await this.createStudyPlan({
@@ -151,15 +179,15 @@ class StudyPlanService {
     // Return only the essential data
     return {
       studyPlan: {
-        id: studyPlanResult.completeStudyPlan.id,
-        title: studyPlanResult.completeStudyPlan.title,
-        totalDays: studyPlanResult.completeStudyPlan.totalDays,
-        studyFrequency: studyPlanResult.completeStudyPlan.studyFrequency,
-        startDate: studyPlanResult.completeStudyPlan.startDate,
-        endDate: studyPlanResult.completeStudyPlan.endDate,
-        status: studyPlanResult.completeStudyPlan.status,
-        createdAt: studyPlanResult.completeStudyPlan.createdAt,
-        updatedAt: studyPlanResult.completeStudyPlan.updatedAt
+        id: studyPlanResult.completeStudyPlan.studyPlan.id,
+        title: studyPlanResult.completeStudyPlan.studyPlan.title,
+        totalDays: studyPlanResult.completeStudyPlan.studyPlan.totalDays,
+        studyFrequency: studyPlanResult.completeStudyPlan.studyPlan.studyFrequency,
+        startDate: studyPlanResult.completeStudyPlan.studyPlan.startDate,
+        endDate: studyPlanResult.completeStudyPlan.studyPlan.endDate,
+        status: studyPlanResult.completeStudyPlan.studyPlan.status,
+        createdAt: studyPlanResult.completeStudyPlan.studyPlan.createdAt,
+        updatedAt: studyPlanResult.completeStudyPlan.studyPlan.updatedAt
       },
       material: {
         id: uploadedMaterial.id,
@@ -236,7 +264,8 @@ class StudyPlanService {
     return fragments;
   }
 
-  async getStudyPlan(studyPlanId: string, userId: string) {
+  
+  async getStudyPlan(studyPlanId: string, userId: string): Promise<StudyPlanResponse>{
     const studyPlan = await prisma.studyPlan.findFirst({
       where: {
         id: studyPlanId,
@@ -247,7 +276,10 @@ class StudyPlanService {
           select: {
             id: true,
             title: true,
-            type: true
+            type: true,
+            group: true,
+            level: true,
+            materialType: true
           }
         },
         fragments: {
@@ -255,7 +287,7 @@ class StudyPlanService {
             fragmentNumber: 'asc'
           },
           include: {
-            questions: true // Include questions in fragments
+            questions: true
           }
         },
         progress: {
@@ -270,7 +302,44 @@ class StudyPlanService {
       throw new AppError('Study plan not found', 404);
     }
 
-    return studyPlan;
+    return {
+      studyPlan: {
+        id: studyPlan.id,
+        title: studyPlan.title,
+        totalDays: studyPlan.totalDays,
+        studyFrequency: studyPlan.studyFrequency,
+        startDate: studyPlan.startDate,
+        endDate: studyPlan.endDate,
+        status: studyPlan.status,
+        createdAt: studyPlan.createdAt,
+        updatedAt: studyPlan.updatedAt
+      },
+      material: studyPlan.material
+        ? {
+            id: studyPlan.material.id,
+            title: studyPlan.material.title,
+            type: studyPlan.material.type,
+            group: studyPlan.material.group,
+            level: studyPlan.material.level,
+            materialType: studyPlan.material.materialType
+          }
+        : null,
+      fragments: studyPlan.fragments.map(fragment => ({
+        id: fragment.id,
+        fragmentNumber: fragment.fragmentNumber,
+        summary: fragment.summary,
+        scheduledDate: fragment.scheduledDate,
+        questions: fragment.questions.map(q => ({
+          id: q.id,
+          text: q.text,
+          options: q.options,
+          answer: q.answer
+        }))
+      })),
+      stats: {
+        totalFragments: studyPlan.fragments.length,
+      }
+    };
   }
 
   async getUserStudyPlans(userId: string, status?: PlanStatus) {
