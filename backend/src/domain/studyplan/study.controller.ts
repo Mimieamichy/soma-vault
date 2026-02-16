@@ -201,7 +201,7 @@ class StudyPlanController {
         return;
       }
 
-      const progress = await studyPlanService.markFragmentComplete(fragmentIdStr, req.user.userId,timeSpent ? parseInt(timeSpent) : undefined, notes);
+      const progress = await studyPlanService.markFragmentComplete(fragmentIdStr, req.user.userId);
 
       res.status(200).json({
         success: true,

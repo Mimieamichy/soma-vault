@@ -388,7 +388,7 @@ class StudyPlanService {
     });
   }
 
-  async markFragmentComplete(fragmentId: string, userId: string, timeSpent?: number, notes?: string) {
+  async markFragmentComplete(fragmentId: string, userId: string) {
     const fragment = await prisma.studyFragment.findUnique({
       where: { id: fragmentId },
       include: {
@@ -413,14 +413,10 @@ class StudyPlanService {
         fragmentId,
         completed: true,
         completedAt: new Date(),
-        timeSpent: timeSpent ?? null,
-        notes: notes ?? null
       },
       update: {
         completed: true,
         completedAt: new Date(),
-        timeSpent: timeSpent ?? null,
-        notes: notes ?? null
       }
     });
 
