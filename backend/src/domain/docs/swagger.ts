@@ -1778,7 +1778,7 @@ const document = {
         }
       }
     },
-    '/studyplan': {
+    '/studyplan/:id': {
       post: {
         tags: ['Study Plans'],
         summary: 'Create a study plan',

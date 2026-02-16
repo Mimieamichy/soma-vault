@@ -361,12 +361,6 @@ class StudyPlanService {
             type: true
           }
         },
-        _count: {
-          select: {
-            fragments: true,
-            progress: true
-          }
-        }
       },
       orderBy: {
         createdAt: 'desc'

@@ -13,7 +13,10 @@ interface AuthRequest extends Request {
 class StudyPlanController {
   async createStudyPlan(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { materialId, title, totalDays, studyFrequency, startDate} = req.body;
+      const {title, totalDays, studyFrequency, startDate} = req.body;
+      const {id} = req.params
+
+      const materialId = Array.isArray(id) ? id[0] : id;
 
       if (!materialId || !title || !totalDays || !studyFrequency) {
         res.status(400).json({

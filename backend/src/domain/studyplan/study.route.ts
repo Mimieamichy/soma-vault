@@ -14,8 +14,8 @@ import upload from '../../shared/utils/fileUpload';
 studyRouter.use(authenticate);
 
 
-studyRouter.post('/', (req, res) => studyPlanController.createStudyPlan(req, res));
 studyRouter.post('/upload', upload.single('studyPlan'), (req, res) => studyPlanController.createStudyPlanWithFile(req, res));
+studyRouter.post('/:id', (req, res) => studyPlanController.createStudyPlan(req, res));
 studyRouter.get('/', (req, res) => studyPlanController.getUserStudyPlans(req, res));
 studyRouter.get('/:id', (req, res) => studyPlanController.getStudyPlan(req, res));
 studyRouter.get('/:id/progress', (req, res) => studyPlanController.getStudyProgress(req, res));
