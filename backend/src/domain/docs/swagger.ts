@@ -1830,7 +1830,9 @@ const document = {
             }
           }
         }
-      },
+      }
+    },
+    '/studyplan': {
       get: {
         tags: ['Study Plans'],
         summary: 'Get user study plans',
