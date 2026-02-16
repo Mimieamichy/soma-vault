@@ -198,7 +198,7 @@ class AuthService {
     });
 
     if (!user) {
-      return { message: "If email exists, reset link will be sent" };
+      throw new AppError('email does not exist', 401);
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
