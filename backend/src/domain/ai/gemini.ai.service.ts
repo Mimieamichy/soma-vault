@@ -37,11 +37,11 @@ Generate a clear, concise summary (150-200 words) that:
 3. Focuses on what students need to know
 4. Organizes information logically
 
-Return only the summary text, no additional formatting.`;
+    Return only the summary text, no additional formatting.`;
 
     try {
       const response = await genAI.models.generateContent({
-        model: "gemini-3-pro-preview", // Changed to flash for better reliability
+        model: "gemini-3-pro-preview", 
         contents: prompt,
       });
       const summary = response.text || "Summary could not be generated for this fragment.";
@@ -61,9 +61,8 @@ Study Content:
 ${content}
 
 Requirements:
-- Generate 2 multiple choice questions with 4 options each
-- Generate 2 true/false questions
-- Generate 1 short answer question
+- Generate 4 multiple choice questions with 4 options each
+- Generate 1 true/false questions
 - Questions should test understanding, not just memorization
 
 Return ONLY a valid JSON array with NO markdown formatting, NO code blocks, NO explanation.
@@ -81,11 +80,6 @@ Use this EXACT format:
     "type": "true_false",
     "options": ["True", "False"],
     "correctAnswer": "True"
-  },
-  {
-    "question": "Explain the main outcome of the competition.",
-    "type": "short_answer",
-    "correctAnswer": "Brief model answer here"
   }
 ]`;
 
