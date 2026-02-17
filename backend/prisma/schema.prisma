@@ -112,6 +112,7 @@ model StudyFragment {
   summary         String
   scheduledDate   DateTime
   createdAt       DateTime      @default(now())
+  completed       Boolean       @default(false)
 
   studyPlan       StudyPlan     @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
   progress        StudyProgress[]

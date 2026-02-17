@@ -57,6 +57,7 @@ type StudyPlanResponse = {
   fragments: {
     id: string;
     fragmentNumber: number;
+    completed: Boolean;
     summary: string;
     content: string;
     scheduledDate: Date;
@@ -201,6 +202,7 @@ class StudyPlanService {
       fragments: studyPlanResult.fragments.map(fragment => ({
         id: fragment.id,
         fragmentNumber: fragment.fragmentNumber,
+        completed: fragment.completed,
         summary: fragment.summary,
         content: fragment.content,
         scheduledDate: fragment.scheduledDate,
@@ -330,6 +332,7 @@ class StudyPlanService {
         id: fragment.id,
         fragmentNumber: fragment.fragmentNumber,
         summary: fragment.summary,
+        completed: fragment.completed,
         content: fragment.content,
         scheduledDate: fragment.scheduledDate,
         questions: fragment.questions.map(q => ({
