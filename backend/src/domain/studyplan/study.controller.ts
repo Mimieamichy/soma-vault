@@ -12,6 +12,7 @@ interface AuthRequest extends Request {
 
 class StudyPlanController {
   async createStudyPlan(req: AuthRequest, res: Response): Promise<void> {
+    console.log(req.body)
     try {
       const {title, totalDays, studyFrequency, startDate} = req.body;
       const {id} = req.params

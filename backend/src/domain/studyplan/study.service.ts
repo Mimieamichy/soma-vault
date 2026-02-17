@@ -87,7 +87,6 @@ class StudyPlanService {
     const material = await prisma.material.findFirst({
       where: {
         id: materialId,
-        userId
       }
     });
 
@@ -393,22 +392,29 @@ class StudyPlanService {
 
   async markFragmentComplete(fragmentId: string, userId: string) {
     const fragment = await prisma.studyFragment.findUnique({
-      where: { id: fragmentId },
-      include: {
-        studyPlan: true
-      }
+      where: { id: fragmentId },  
+      include: { studyPlan: true }
     });
 
     if (!fragment || fragment.studyPlan.userId !== userId) {
       throw new AppError('Fragment not found', 404);
     }
 
+    if (fragment.completed) {
+      throw new AppError('Fragment already completed', 400);
+    }
+
+
+    await prisma.studyFragment.update({
+      where: { id: fragmentId },
+      data: {
+        completed: true,
+      }
+    });
+
     const progress = await prisma.studyProgress.upsert({
       where: {
-        userId_fragmentId: {
-          userId,
-          fragmentId
-        }
+        userId_fragmentId: { userId, fragmentId }
       },
       create: {
         userId,
@@ -423,7 +429,6 @@ class StudyPlanService {
       }
     });
 
-    // Check if all fragments are completed
     await this.checkAndCompleteStudyPlan(fragment.studyPlanId, userId);
 
     return progress;
@@ -431,27 +436,27 @@ class StudyPlanService {
 
   async checkAndCompleteStudyPlan(studyPlanId: string, userId: string) {
     const studyPlan = await prisma.studyPlan.findUnique({
-      where: { id: studyPlanId },
+      where: { id: studyPlanId, userId },
       include: {
-        fragments: true,
-        progress: {
-          where: {
-            userId,
-            completed: true
-          }
+        fragments: {
+          where: { completed: true }
+        },
+        _count: {
+          select: { fragments: true }  // total count
         }
       }
     });
 
     if (!studyPlan) return;
 
-    // If all fragments are completed, mark study plan as completed
-    if (studyPlan.fragments.length === studyPlan.progress.length) {
-      await prisma.studyPlan.update({
-        where: { id: studyPlanId },
-        data: { status: PlanStatus.COMPLETED }
-      });
-    }
+    const allCompleted = studyPlan.fragments.length === studyPlan._count.fragments;
+
+    await prisma.studyPlan.update({
+      where: { id: studyPlanId },
+      data: {
+        status: allCompleted ? PlanStatus.COMPLETED : PlanStatus.ACTIVE
+      }
+    });
   }
 
   async getStudyProgress(studyPlanId: string, userId: string) {
