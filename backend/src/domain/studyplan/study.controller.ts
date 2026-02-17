@@ -40,15 +40,10 @@ class StudyPlanController {
         startDate: startDate ? new Date(startDate) : new Date()
       });
 
-      res.status(201).json({
-        success: true,
-        data: result
-      });
+      res.status(201).json({success: true, data: result});
     } catch (error) {
-      res.status(400).json({
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to create study plan'
-      });
+      console.log(error)
+      res.status(400).json({success: false, error: error instanceof Error ? error.message : 'Failed to create study plan'});
     }
   }
 
@@ -89,10 +84,8 @@ class StudyPlanController {
 
       res.status(201).json({success: true, data: result});
     } catch (error) {
-      res.status(400).json({
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to create study plan with file'
-      });
+      console.log(error)
+      res.status(400).json({success: false, error: error instanceof Error ? error.message : 'Failed to create study plan with file'});
     }
   }
 
@@ -118,10 +111,8 @@ class StudyPlanController {
         data: studyPlan
       });
     } catch (error) {
-      res.status(404).json({
-        success: false,
-        error: error instanceof Error ? error.message : 'Study plan not found'
-      });
+      console.log(error)
+      res.status(404).json({success: false, error: error instanceof Error ? error.message : 'Study plan not found'});
     }
   }
 

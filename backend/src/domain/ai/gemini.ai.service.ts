@@ -55,33 +55,35 @@ Generate a clear, concise summary (150-200 words) that:
   }
 
   async generateQuestions(content: string, count: number = 5): Promise<Question[]> {
-    const prompt = `Based on the following study content, generate exactly ${count} practice questions.
+    const prompt = `You are a quiz generator. Read the study content below carefully, then generate exactly ${count} questions that test understanding of the SPECIFIC facts, concepts, and ideas in this content only.
 
-Study Content:
-${content}
+    Study Content:
+    ${content}
 
-Requirements:
-- Generate 4 multiple choice questions with 4 options each
-- Generate 1 true/false questions
-- Questions should test understanding, not just memorization
+    Rules:
+    - Every question MUST be directly answerable from the content above
+    - Do NOT use generic or template-style questions
+    - Vary question types: ${count - 1} multiple choice (4 options each), 1 true/false
+    - Test different concepts — do not repeat the same idea in multiple questions
+    - Wrong answer options must be plausible but clearly incorrect based on the content
+    - Do not reference or copy the examples below — they are format examples only
 
-Return ONLY a valid JSON array with NO markdown formatting, NO code blocks, NO explanation.
-Use this EXACT format:
-
-[
-  {
-    "question": "What is the main purpose of AfriHackBox?",
-    "type": "multiple_choice",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctAnswer": "Option A"
-  },
-  {
-    "question": "True or False: The competition lasted for 2 days.",
-    "type": "true_false",
-    "options": ["True", "False"],
-    "correctAnswer": "True"
-  }
-]`;
+    Return ONLY a valid JSON array. No markdown, no explanation.
+    Format:
+    [
+      {
+        "question": "<specific question about the content>",
+        "type": "multiple_choice",
+        "options": ["<correct answer>", "<wrong>", "<wrong>", "<wrong>"],
+        "correctAnswer": "<correct answer>"
+      },
+      {
+        "question": "<specific true/false claim from the content>",
+        "type": "true_false",
+        "options": ["True", "False"],
+        "correctAnswer": "True"
+      }
+    ]`;
 
     try {
       const response = await genAI.models.generateContent({
@@ -128,11 +130,6 @@ Use this EXACT format:
 
   private generateFallbackQuestions(content: string, count: number): Question[] {
     const questions: Question[] = [
-      {
-        question: 'What is the main topic discussed in this section?',
-        type: 'short_answer',
-        correctAnswer: 'Based on the study material provided'
-      },
       {
         question: 'This section contains important information relevant to the overall topic.',
         type: 'true_false',
@@ -262,13 +259,13 @@ Use this EXACT format:
 
     const prompt = `You are a helpful study assistant answering student questions based on their study materials.
 
-Study Materials:
-${contextText}
+    Study Materials:
+    ${contextText}
 
-Student Question:
-${question}
+    Student Question:
+    ${question}
 
-Provide a clear, accurate answer based ONLY on the provided study materials. If the materials don't contain enough information to answer the question, say so. Keep the answer concise (2-3 paragraphs max).`;
+    Provide a clear, accurate answer based ONLY on the provided study materials. If the materials don't contain enough information to answer the question, say so. Keep the answer concise (2-3 paragraphs max).`;
 
     try {
       const response = await genAI.models.generateContent({
@@ -287,20 +284,20 @@ Provide a clear, accurate answer based ONLY on the provided study materials. If 
   async improveStudyNotes(notes: string, content: string): Promise<string> {
     const prompt = `You are a study assistant helping improve student notes.
 
-Original Study Content:
-${content}
+    Original Study Content:
+    ${content}
 
-Student's Notes:
-${notes}
+    Student's Notes:
+    ${notes}
 
-Review and enhance these notes by:
-1. Filling in any missing key concepts
-2. Organizing information more clearly
-3. Adding helpful mnemonics or memory aids if applicable
-4. Highlighting connections between concepts
-5. Keeping the student's voice and style
+    Review and enhance these notes by:
+    1. Filling in any missing key concepts
+    2. Organizing information more clearly
+    3. Adding helpful mnemonics or memory aids if applicable
+    4. Highlighting connections between concepts
+    5. Keeping the student's voice and style
 
-Return only the improved notes, no additional commentary.`;
+    Return only the improved notes, no additional commentary.`;
 
     try {
       const response = await genAI.models.generateContent({
@@ -369,22 +366,18 @@ Return only the improved notes, no additional commentary.`;
     }
   }
 
-  async analyzeMaterialDifficulty(content: string): Promise<{
-    level: 'beginner' | 'intermediate' | 'advanced';
-    estimatedStudyTime: number;
-    topicComplexity: string
-  }> {
+  async analyzeMaterialDifficulty(content: string): Promise<{level: 'beginner' | 'intermediate' | 'advanced', estimatedStudyTime: number; topicComplexity: string}> {
     const prompt = `Analyze this study material and provide a difficulty assessment.
 
-Content:
-${content.substring(0, 2000)}...
+    Content:
+    ${content.substring(0, 2000)}...
 
-Return ONLY a JSON object in this format (no markdown):
-{
-  "level": "beginner" | "intermediate" | "advanced",
-  "estimatedStudyTime": <number in hours>,
-  "topicComplexity": "<brief description of complexity>"
-}`;
+    Return ONLY a JSON object in this format (no markdown):
+    {
+      "level": "beginner" | "intermediate" | "advanced",
+      "estimatedStudyTime": <number in hours>,
+      "topicComplexity": "<brief description of complexity>"
+    }`;
 
     try {
       const response = await genAI.models.generateContent({
