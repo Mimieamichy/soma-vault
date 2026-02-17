@@ -14,14 +14,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useSearchParams } from 'react-router-dom';
+
+interface FragmentQuestion {
+  id: string;
+  text: string;
+  options: string[];
+  answer: string;
+}
 
 interface Fragment {
   id: string;
   title: string;
   summary: string;
+  content: string;
   questions: string[];
   isCompleted: boolean;
   date: string;
+  quizQuestions?: FragmentQuestion[];
 }
 
 interface StudyPlan {
@@ -39,109 +49,85 @@ interface StudyPlan {
   archived: boolean;
   subject?: string;
   materialType?: 'notes' | 'pq';
+  progressPercentage?: number;
 }
-
-const generateMockPlan = (title: string): Fragment[] => [
-  {
-    id: '1',
-    title: 'Week 1: Introduction & Fundamentals',
-    summary: 'Cover the basic concepts and terminology. Understand the historical context and key principles that form the foundation of the subject.',
-    questions: [
-      'What are the three main principles discussed?',
-      'How does this concept relate to real-world applications?',
-      'Define the key terms introduced in this section.',
-    ],
-    isCompleted: true,
-    date: 'Jan 15',
-  },
-  {
-    id: '2',
-    title: 'Week 2: Core Concepts',
-    summary: 'Deep dive into the core mechanisms and processes. Analyze how different components interact and affect outcomes.',
-    questions: [
-      'Explain the mechanism of the primary process.',
-      'What factors influence the rate of reaction?',
-      'Compare and contrast the two main approaches.',
-    ],
-    isCompleted: true,
-    date: 'Jan 22',
-  },
-  {
-    id: '3',
-    title: 'Week 3: Advanced Topics',
-    summary: 'Explore advanced applications and edge cases. Study complex scenarios and their solutions.',
-    questions: [
-      'How do exceptions to the rule affect outcomes?',
-      'Design a solution for the given problem.',
-      'What are the limitations of current methods?',
-    ],
-    isCompleted: false,
-    date: 'Jan 29',
-  },
-  {
-    id: '4',
-    title: 'Week 4: Practice & Review',
-    summary: 'Consolidate learning through practice problems and review sessions. Identify weak areas and reinforce understanding.',
-    questions: [
-      'Solve the multi-step problem using learned concepts.',
-      'Create a summary of key takeaways.',
-      'What areas need further study?',
-    ],
-    isCompleted: false,
-    date: 'Feb 5',
-  },
-];
 
 export default function StudyPlanner() {
   const [studyPlans, setStudyPlans] = useState<StudyPlan[]>([]);
   const [currentPlanId, setCurrentPlanId] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(true);
+  const [searchParams] = useSearchParams();
+  const materialId = searchParams.get('materialId');
+  const [isLoadingCurrentPlan, setIsLoadingCurrentPlan] = useState(false);
+  const [activeFragmentId, setActiveFragmentId] = useState<string | null>(null);
+  const [activeQuizFragmentId, setActiveQuizFragmentId] = useState<string | null>(null);
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
 
   useEffect(() => {
     const loadPlans = async () => {
       try {
+        setIsLoadingPlans(true);
         const res = await api.get('/studyplan');
         console.log('GET /studyplan response:', res);
         const raw = res.data?.data || res.data || [];
         console.log('GET /studyplan raw payload:', raw);
         if (Array.isArray(raw)) {
-          const mapped: StudyPlan[] = raw.map((p: any) => ({
+          const basePlans: StudyPlan[] = raw.map((p: any) => ({
             id: p.id,
-            group: p.group || p.courseGroup || '',
             title: p.title || p.courseTitle || '',
-            level: p.level || '',
-            studyFrequency: p.studyFrequency || 'WEEKLY',
-            duration: String(p.duration || 1),
-            startDate: p.startDate ? new Date(p.startDate) : new Date(),
-            fragments: Array.isArray(p.fragments) ? p.fragments.map((f: any) => ({
-              id: f.id || String(Math.random()),
-              title: f.title || 'Session',
-              summary: f.summary || '',
-              questions: Array.isArray(f.questions) ? f.questions : [],
-              isCompleted: !!f.isCompleted,
-              date: f.date || ''
-            })) : [],
+            group: '',
+            level: '',
+            studyFrequency: '',
+            duration: '0',
+            startDate: new Date(),
+            fragments: [],
             files: [],
-            createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
-            priority: p.priority || 'medium',
-            archived: !!p.archived,
-            subject: p.subject,
-            materialType: p.materialType
+            createdAt: new Date(),
+            priority: 'medium',
+            archived: false,
+            subject: undefined,
+            materialType: undefined,
           }));
-          console.log('Mapped study plans:', mapped);
-          setStudyPlans(mapped);
-          if (mapped.length > 0) {
-            setCurrentPlanId(mapped[0].id);
+          setStudyPlans(basePlans);
+          if (basePlans.length > 0) {
+            setCurrentPlanId(basePlans[0].id);
           }
+          basePlans.forEach(async (plan) => {
+            try {
+              const pr = await api.get(`/studyplan/${plan.id}/progress`);
+              const pdata = pr.data?.data || pr.data;
+              const progressPercentage = Number(pdata?.progressPercentage) || 0;
+              setStudyPlans(prev => prev.map(sp => sp.id === plan.id ? { ...sp, progressPercentage } : sp));
+            } catch {
+              setStudyPlans(prev => prev.map(sp => sp.id === plan.id ? { ...sp, progressPercentage: 0 } : sp));
+            }
+          });
         }
       } catch (error) {
         console.error('Failed to load study plans:', error);
         toast.error('Could not load your study plans');
+      } finally {
+        setIsLoadingPlans(false);
       }
     };
     loadPlans();
   }, []);
+
+  useEffect(() => {
+    if (materialId) {
+      setIsDialogOpen(true);
+    }
+  }, [materialId]);
+
+  useEffect(() => {
+    const plan = studyPlans.find(p => p.id === currentPlanId);
+    if (currentPlanId && plan && (!plan.fragments || plan.fragments.length === 0)) {
+      loadPlanDetails(currentPlanId);
+    }
+  }, [currentPlanId, studyPlans]);
 
   const handleCreatePlan = async (data: { 
     group: string;
@@ -182,7 +168,7 @@ export default function StudyPlanner() {
       const newPlan: StudyPlan = {
         ...data,
         id: response.data?.id || `plan-${Date.now()}`,
-        fragments: response.data?.fragments || generateMockPlan(data.title),
+        fragments: Array.isArray(response.data?.fragments) ? response.data.fragments : [],
         createdAt: new Date(),
         priority: 'medium',
         archived: false
@@ -200,52 +186,118 @@ export default function StudyPlanner() {
 
   // Get current active plan
   const currentPlan = studyPlans.find(plan => plan.id === currentPlanId) || null;
+  const activeFragment = currentPlan?.fragments?.find(f => f.id === activeFragmentId) || null;
+  const activeQuizFragment = currentPlan?.fragments?.find(f => f.id === activeQuizFragmentId) || null;
 
   const handleToggleComplete = (id: string) => {
-    setStudyPlans(prev => prev.map(plan => {
-      if (plan.id === currentPlanId) {
+    const plan = studyPlans.find(p => p.id === currentPlanId);
+    const fragment = plan?.fragments?.find(f => f.id === id);
+    if (!plan || !fragment) return;
+    if (fragment.isCompleted) return;
+
+    setStudyPlans(prev => prev.map(p => {
+      if (p.id === currentPlanId) {
         return {
-          ...plan,
-          fragments: plan.fragments.map(f => 
-            f.id === id ? { ...f, isCompleted: !f.isCompleted } : f
+          ...p,
+          fragments: p.fragments.map(f => 
+            f.id === id ? { ...f, isCompleted: true } : f
           ),
         };
       }
-      return plan;
+      return p;
     }));
-    api.post(`/studyplan/fragment/${id}/complete`).catch(() => {
-      setStudyPlans(prev => prev.map(plan => {
-        if (plan.id === currentPlanId) {
+
+    api.post(`/studyPlan/fragment/${id}/complete`).catch(() => {
+      setStudyPlans(prev => prev.map(p => {
+        if (p.id === currentPlanId) {
           return {
-            ...plan,
-            fragments: plan.fragments.map(f => 
-              f.id === id ? { ...f, isCompleted: !f.isCompleted } : f
+            ...p,
+            fragments: p.fragments.map(f => 
+              f.id === id ? { ...f, isCompleted: false } : f
             ),
           };
         }
-        return plan;
+        return p;
       }));
       toast.error('Failed to update fragment status');
     });
   };
 
-  const handleSaveFragment = (id: string, summary: string, questions: string[]) => {
-    setStudyPlans(prev => prev.map(plan => {
-      if (plan.id === currentPlanId) {
+  const loadPlanDetails = async (id: string) => {
+    try {
+      setIsLoadingCurrentPlan(true);
+      const res = await api.get(`/studyplan/${id}`);
+      console.log(`GET /studyplan/${id} response:`, res);
+      console.log('GET /studyplan/{id} payload:', res.data);
+      const p = res.data?.data || res.data || {};
+      const studyPlanData = p.studyPlan || {};
+      const materialData = p.material || {};
+
+      const fragments: Fragment[] = Array.isArray(p.fragments) ? p.fragments.map((f: any, index: number) => {
+        const rawQuestions = Array.isArray(f.questions) ? f.questions : [];
+        const quizQuestions: FragmentQuestion[] = rawQuestions.map((q: any) => ({
+          id: q.id,
+          text: q.text,
+          options: Array.isArray(q.options) ? q.options : [],
+          answer: q.answer,
+        }));
+        const qs = quizQuestions.map(q => q.text);
+
         return {
-          ...plan,
-          fragments: plan.fragments.map(f => 
-            f.id === id ? { ...f, summary, questions } : f
-          ),
+          id: f.id,
+          title: f.title || `Fragment ${f.fragmentNumber ?? index + 1}`,
+          summary: f.summary || '',
+          content: f.content || '',
+          questions: qs,
+          isCompleted: Boolean(f.completed),
+          date: f.scheduledDate ? new Date(f.scheduledDate).toLocaleDateString() : '',
+          quizQuestions,
         };
+      }) : [];
+
+      const updated: Partial<StudyPlan> = {};
+      if (studyPlanData.title || materialData.title) {
+        updated.title = studyPlanData.title || materialData.title;
       }
-      return plan;
-    }));
+      if (materialData.group) {
+        updated.group = materialData.group;
+      }
+      if (materialData.level) {
+        updated.level = materialData.level;
+      }
+      if (studyPlanData.studyFrequency) {
+        updated.studyFrequency = studyPlanData.studyFrequency;
+      }
+      if (typeof studyPlanData.totalDays === 'number') {
+        const months = Math.round(studyPlanData.totalDays / 30);
+        updated.duration = String(months || 1);
+      }
+      if (studyPlanData.startDate) {
+        updated.startDate = new Date(studyPlanData.startDate);
+      }
+      if (studyPlanData.createdAt) {
+        updated.createdAt = new Date(studyPlanData.createdAt);
+      }
+      updated.fragments = fragments;
+      if (materialData.group) {
+        updated.subject = materialData.group;
+      }
+      if (materialData.materialType) {
+        updated.materialType = materialData.materialType;
+      }
+
+      setStudyPlans(prev => prev.map(plan => plan.id === id ? { ...plan, ...updated } : plan));
+    } catch (error) {
+      console.error('Failed to load plan details:', error);
+      toast.error('Failed to load plan details');
+    } finally {
+      setIsLoadingCurrentPlan(false);
+    }
   };
 
   const completedCount = currentPlan?.fragments.filter(f => f.isCompleted).length || 0;
   const totalCount = currentPlan?.fragments.length || 0;
-  const progressPercent = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+  const progressPercent = typeof currentPlan?.progressPercentage === 'number' ? Math.round(currentPlan.progressPercentage) : 0;
 
   return (
     <div className="min-h-[calc(100vh-8rem)] flex flex-col space-y-6">
@@ -267,7 +319,11 @@ export default function StudyPlanner() {
                 </DialogDescription>
               </DialogHeader>
               <div className="py-4">
-                <StudyPlanForm onSubmit={handleCreatePlan} isLoading={isGenerating} />
+                <StudyPlanForm 
+                  onSubmit={handleCreatePlan} 
+                  isLoading={isGenerating} 
+                  mode={materialId ? 'fromMaterial' : 'full'}
+                />
               </div>
             </DialogContent>
           </Dialog>
@@ -303,14 +359,17 @@ export default function StudyPlanner() {
         <div className="w-full overflow-x-auto pb-2 scrollbar-hide">
           <div className="flex space-x-2 min-w-max">
             {studyPlans.map(plan => {
-              const planCompleted = plan.fragments.filter(f => f.isCompleted).length;
-              const planTotal = plan.fragments.length;
-              const planProgress = planTotal > 0 ? Math.round((planCompleted / planTotal) * 100) : 0;
+              const planProgress = typeof plan.progressPercentage === 'number' ? Math.round(plan.progressPercentage) : 0;
               
               return (
                 <button
                   key={plan.id}
-                  onClick={() => setCurrentPlanId(plan.id)}
+                  onClick={() => {
+                    setCurrentPlanId(plan.id);
+                    if (!plan.fragments || plan.fragments.length === 0) {
+                      loadPlanDetails(plan.id);
+                    }
+                  }}
                   className={`flex flex-col items-start gap-2 px-5 py-4 rounded-xl border transition-all duration-200 min-w-[200px] ${
                     currentPlanId === plan.id 
                       ? 'border-red-600 bg-red-600/5 shadow-md' 
@@ -344,7 +403,9 @@ export default function StudyPlanner() {
       )}
 
       <div className="flex-1 flex flex-col items-center justify-center w-full">
-        {currentPlan ? (
+        {isLoadingPlans ? (
+          <div className="text-muted-foreground">Loading your study plans...</div>
+        ) : currentPlan ? (
           <div className="w-full space-y-6 animate-fade-in">
             {/* Plan Header */}
             <div className="bg-card rounded-xl p-5 sm:p-6 border border-border shadow-card">
@@ -373,7 +434,7 @@ export default function StudyPlanner() {
                     </span>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center gap-3">
                     <div className="bg-yellow-500/10 text-yellow-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
                       <Trophy className="h-3 w-3" />
@@ -385,20 +446,6 @@ export default function StudyPlanner() {
                         {completedCount}/{totalCount}
                       </span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button 
-                      className="p-2 text-muted-foreground hover:text-red-600 rounded-full hover:bg-red-500/5 transition-colors"
-                      title="Edit Plan"
-                    >
-                      ✏️
-                    </button>
-                    <button 
-                      className="p-2 text-muted-foreground hover:text-red-600 rounded-full hover:bg-red-500/5 transition-colors"
-                      title="Archive Plan"
-                    >
-                      📁
-                    </button>
                   </div>
                 </div>
               </div>
@@ -412,25 +459,170 @@ export default function StudyPlanner() {
               </div>
             </div>
 
-            {/* Timeline */}
-            <div className="relative">
-              <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-border" />
-              <div className="space-y-5">
-                {currentPlan.fragments.map((fragment) => (
-                  <div key={fragment.id} className="relative pl-12 sm:pl-14">
-                    <div className={`absolute left-2.5 sm:left-4 top-7 w-5 h-5 sm:w-4 sm:h-4 rounded-full border-2 transition-colors duration-300 ${
-                      fragment.isCompleted ? 'bg-red-600 border-red-600' : 'bg-card border-red-600'
-                    }`} />
-                    <div className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wider">{fragment.date}</div>
-                    <FragmentCard
-                      {...fragment}
-                      onToggleComplete={handleToggleComplete}
-                      onSave={handleSaveFragment}
-                    />
+            {/* Timeline / Note / Questions View */}
+            {activeQuizFragment ? (
+              <div className="bg-card rounded-xl p-5 sm:p-6 border border-border shadow-card">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wider">
+                      {activeQuizFragment.date}
+                    </div>
+                    <h4 className="text-lg font-semibold text-foreground">
+                      {activeQuizFragment.title}
+                    </h4>
                   </div>
-                ))}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setActiveQuizFragmentId(null);
+                      setQuizAnswers({});
+                      setQuizSubmitted(false);
+                    }}
+                  >
+                    Back to plan
+                  </Button>
+                </div>
+                <div className="mt-2 text-sm text-muted-foreground mb-4">
+                  Answer the questions for this fragment.
+                </div>
+                <div className="space-y-4">
+                  {(activeQuizFragment.quizQuestions || []).map((q, index) => {
+                    const selected = quizAnswers[q.id];
+                    const isCorrect = quizSubmitted && selected === q.answer;
+                    const isWrong = quizSubmitted && selected && selected !== q.answer;
+                    return (
+                      <div
+                        key={q.id}
+                        className="border border-border rounded-lg p-3 space-y-2"
+                      >
+                        <div className="font-medium text-sm text-foreground">
+                          {index + 1}. {q.text}
+                        </div>
+                        <div className="space-y-1">
+                          {q.options.map((option, optIndex) => {
+                            const letter = String.fromCharCode(65 + optIndex);
+                            const checked = selected === option;
+                            return (
+                              <label
+                                key={option}
+                                className="flex items-center gap-2 text-sm cursor-pointer"
+                              >
+                                <input
+                                  type="radio"
+                                  name={q.id}
+                                  value={option}
+                                  checked={checked}
+                                  onChange={() => {
+                                    setQuizAnswers(prev => ({
+                                      ...prev,
+                                      [q.id]: option,
+                                    }));
+                                  }}
+                                  className="h-3 w-3"
+                                />
+                                <span className="font-medium">{letter}.</span>
+                                <span>{option}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                        {quizSubmitted && (
+                          <div className="text-xs mt-1">
+                            {isCorrect && (
+                              <span className="text-green-600 font-medium">
+                                Correct
+                              </span>
+                            )}
+                            {isWrong && (
+                              <span className="text-red-600 font-medium">
+                                Incorrect. Correct answer: {q.answer}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  {quizSubmitted && activeQuizFragment.quizQuestions && (
+                    <div className="text-sm font-semibold">
+                      Score:{" "}
+                      {Object.values(activeQuizFragment.quizQuestions).filter(
+                        q => quizAnswers[q.id] === q.answer
+                      ).length}
+                      /
+                      {activeQuizFragment.quizQuestions.length}
+                    </div>
+                  )}
+                  <Button
+                    size="sm"
+                    className="ml-auto"
+                    onClick={() => setQuizSubmitted(true)}
+                    disabled={quizSubmitted}
+                  >
+                    {quizSubmitted ? 'Submitted' : 'Submit Answers'}
+                  </Button>
+                </div>
               </div>
-            </div>
+            ) : activeFragment ? (
+              <div className="bg-card rounded-xl p-5 sm:p-6 border border-border shadow-card">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wider">
+                      {activeFragment.date}
+                    </div>
+                    <h4 className="text-lg font-semibold text-foreground">
+                      {activeFragment.title}
+                    </h4>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setActiveFragmentId(null)}
+                  >
+                    Back to plan
+                  </Button>
+                </div>
+                <div className="mt-2 text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                  {activeFragment.content || 'No content available for this fragment.'}
+                </div>
+              </div>
+            ) : (
+              <div className="relative">
+                {isLoadingCurrentPlan && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                    <span className="text-muted-foreground">Loading plan details...</span>
+                  </div>
+                )}
+                <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-border" />
+                <div className="space-y-5">
+                  {currentPlan.fragments.map((fragment) => (
+                    <div key={fragment.id} className="relative pl-12 sm:pl-14">
+                      <div className={`absolute left-2.5 sm:left-4 top-7 w-5 h-5 sm:w-4 sm:h-4 rounded-full border-2 transition-colors duration-300 ${
+                        fragment.isCompleted ? 'bg-red-600 border-red-600' : 'bg-card border-red-600'
+                      }`} />
+                      <div className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wider">{fragment.date}</div>
+                      <FragmentCard
+                        {...fragment}
+                        onToggleComplete={handleToggleComplete}
+                        onViewNote={(id) => {
+                          setActiveQuizFragmentId(null);
+                          setActiveFragmentId(id);
+                        }}
+                        onViewQuestions={(id) => {
+                          setActiveFragmentId(null);
+                          setActiveQuizFragmentId(id);
+                          setQuizAnswers({});
+                          setQuizSubmitted(false);
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           /* High-Impact Empty State */
@@ -472,7 +664,11 @@ export default function StudyPlanner() {
                     </DialogDescription>
                   </DialogHeader>
                   <div className="py-4">
-                    <StudyPlanForm onSubmit={handleCreatePlan} isLoading={isGenerating} />
+                    <StudyPlanForm 
+                      onSubmit={handleCreatePlan} 
+                      isLoading={isGenerating} 
+                      mode={materialId ? 'fromMaterial' : 'full'}
+                    />
                   </div>
                 </DialogContent>
               </Dialog>

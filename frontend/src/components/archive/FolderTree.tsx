@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Folder, ArrowLeft, FileText, Image as ImageIcon, Eye, Download, Info, Loader2 } from 'lucide-react';
+import { Folder, ArrowLeft, FileText, Image as ImageIcon, Eye, Download, Info, Loader2, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MaterialItem } from '@/data/mockData';
 import { api } from '@/lib/api';
@@ -103,6 +103,7 @@ interface FolderTreeProps {
   folderData?: APISchool[];
   setFolderData?: (data: APISchool[] | ((prev: APISchool[]) => APISchool[])) => void;
   searchTerm?: string;
+  onCreateStudyPlan?: (material: MaterialItem) => void;
 }
 
 export function FolderTree({ 
@@ -113,7 +114,8 @@ export function FolderTree({
   onMaterialClick, 
   folderData: initialFolderData = [],
   setFolderData: parentSetFolderData,
-  searchTerm
+  searchTerm,
+  onCreateStudyPlan,
 }: FolderTreeProps) {
   // Navigation stack to track current path
   const [navPath, setNavPath] = useState<FolderNode[]>([]);
@@ -418,6 +420,10 @@ export function FolderTree({
                 <ContextMenuItem onClick={() => setPropertiesMaterial(material)}>
                   <Info className="w-4 h-4 mr-2" />
                   Properties
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => onCreateStudyPlan?.(material)}>
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Create Study Plan
                 </ContextMenuItem>
               </ContextMenuContent>
             </ContextMenu>

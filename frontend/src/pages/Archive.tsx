@@ -12,6 +12,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UploadModal, UploadType } from '@/components/archive/UploadModal';
 import { mockArchiveMaterials, mockArchivePQs, MaterialItem } from '@/data/mockData';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { StudyPlanForm } from '@/components/planner/StudyPlanForm';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function Archive() {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
@@ -38,6 +46,8 @@ export default function Archive() {
   const [pqFolderData, setPqFolderData] = useState<APISchool[]>([]);
   const [searchNotes, setSearchNotes] = useState<MaterialItem[]>([]);
   const [searchPQs, setSearchPQs] = useState<MaterialItem[]>([]);
+  const [planMaterial, setPlanMaterial] = useState<MaterialItem | null>(null);
+  const [isCreatingPlan, setIsCreatingPlan] = useState(false);
 
   // Add debounce for search
   useEffect(() => {
@@ -160,6 +170,37 @@ export default function Archive() {
   const filteredPQs = searchTerm.trim() 
     ? searchPQs 
     : pqMaterials.filter(pq => pq.materialType === 'pq');
+
+  const handleCreatePlanFromArchive = async (data: { 
+    group: string;
+    title: string; 
+    level: string;
+    studyFrequency: string; 
+    duration: string;
+    startDate: Date;
+    materialType: 'notes' | 'pq';
+    files: File[];
+  }) => {
+    if (!planMaterial) return;
+    setIsCreatingPlan(true);
+    try {
+      const payload = {
+        title: data.title,
+        studyFrequency: data.studyFrequency,
+        duration: parseInt(data.duration),
+        startDate: data.startDate.toISOString(),
+      };
+      const res = await api.post(`/studyplan/${planMaterial.id}`, payload);
+      console.log('Created study plan from archive:', res.data);
+      toast.success('Study plan created successfully');
+      setPlanMaterial(null);
+    } catch (error) {
+      console.error('Failed to create study plan from archive:', error);
+      toast.error('Failed to create study plan');
+    } finally {
+      setIsCreatingPlan(false);
+    }
+  };
 
   const handleMaterialsSubmit = async () => {
     if (!materialsLevel || !materialsGroup || !materialsCourseName || !materialsFile) {
@@ -347,6 +388,7 @@ export default function Archive() {
                   folderData={notesFolderData}
                   setFolderData={setNotesFolderData}
                   searchTerm={searchTerm}
+                  onCreateStudyPlan={(material) => setPlanMaterial(material)}
                 />
               )}
             </div>
@@ -429,6 +471,7 @@ export default function Archive() {
                   folderData={pqFolderData}
                   setFolderData={setPqFolderData}
                   searchTerm={searchTerm}
+                  onCreateStudyPlan={(material) => setPlanMaterial(material)}
                 />
                   )}
                 </div>
@@ -450,7 +493,24 @@ export default function Archive() {
           )}
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!planMaterial} onOpenChange={(open) => !open && setPlanMaterial(null)}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Study Plan</DialogTitle>
+            <DialogDescription>
+              Set how often and when you want to study this material.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <StudyPlanForm 
+              onSubmit={handleCreatePlanFromArchive} 
+              isLoading={isCreatingPlan} 
+              mode="fromMaterial"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
