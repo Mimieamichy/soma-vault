@@ -8,9 +8,22 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+// Handle Private Network Access (PNA) preflight request headers
+app.use((req, res, next) => {
+  if (req.headers["access-control-request-private-network"]) {
+    res.setHeader("Access-Control-Allow-Private-Network", "true");
+  }
+  next();
+});
+
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 app.use(express.json());
-app.use(morgan("dev"))
+app.use(morgan("dev"));
 
 import { setupSwagger } from '../src/domain/docs/swagger';
 
