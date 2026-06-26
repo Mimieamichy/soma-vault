@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Upload, Search } from 'lucide-react';
+import { ArrowLeft, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { api } from '@/lib/api';
 
 import { FolderTree, generateFolderId, APISchool, APIGroup, APILevel, APIMaterial } from '@/components/archive/FolderTree';
@@ -319,33 +318,17 @@ export default function Archive() {
 
         <TabsContent value="materials" className="space-y-6">
           <div className="flex flex-col gap-4">
-             <div className="flex justify-end items-center gap-2">
-                {/* Search Bar */}
-                <div className="relative w-full max-w-md">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search materials..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-accent"
-                  />
-                  {isSearching && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <LoadingSpinner size={16} className="min-h-0" />
-                    </div>
-                  )}
-                </div>
-
-                <Button 
-                  className="hidden md:flex bg-accent hover:bg-accent/90 text-accent-foreground"
-                  onClick={() => {
-                    setMaterialsUploadOpen(true);
-                    setUploadType('notes');
-                  }}
-                >
-                  Upload
-                </Button>
-             </div>
+            <div className="flex justify-end items-center gap-2">
+              <Button 
+                className="hidden md:flex bg-accent hover:bg-accent/90 text-accent-foreground"
+                onClick={() => {
+                  setMaterialsUploadOpen(true);
+                  setUploadType('notes');
+                }}
+              >
+                Upload
+              </Button>
+            </div>
             <Button
               className="md:hidden fixed bottom-24 right-6 z-50 shadow-lg bg-accent hover:bg-accent/90 text-accent-foreground"
               onClick={() => {
@@ -399,33 +382,17 @@ export default function Archive() {
           {!selectedPQ ? (
             <div className="space-y-6">
               <div className="flex flex-col gap-4">
-                 <div className="flex justify-end items-center gap-2">
-                    {/* Search Bar */}
-                    <div className="relative w-full max-w-md">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search past questions..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-9 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-accent"
-                      />
-                      {isSearching && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <LoadingSpinner size={16} className="min-h-0" />
-                        </div>
-                      )}
-                    </div>
-
-                    <Button 
-                      className="hidden md:flex bg-accent hover:bg-accent/90 text-accent-foreground"
-                      onClick={() => {
-                        setPqUploadOpen(true);
-                        setUploadType('pq');
-                      }}
-                    >
-                      Upload
-                    </Button>
-                 </div>
+                <div className="flex justify-end items-center gap-2">
+                  <Button 
+                    className="hidden md:flex bg-accent hover:bg-accent/90 text-accent-foreground"
+                    onClick={() => {
+                      setPqUploadOpen(true);
+                      setUploadType('pq');
+                    }}
+                  >
+                    Upload
+                  </Button>
+                </div>
                 <Button
                   className="md:hidden fixed bottom-24 right-6 z-50 shadow-lg bg-accent hover:bg-accent/90 text-accent-foreground"
                   onClick={() => {

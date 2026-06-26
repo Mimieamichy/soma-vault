@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Grid, List, Library, Search } from 'lucide-react';
+import { Grid, List, Library, Search, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MaterialItem } from '@/data/mockData';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { api } from '@/lib/api';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 export default function MyLibrary() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -16,6 +23,8 @@ export default function MyLibrary() {
   const [activeTab, setActiveTab] = useState('materials');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [previewMaterial, setPreviewMaterial] = useState<MaterialItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MaterialItem | null>(null);
 
   useEffect(() => {
     const fetchMyLibrary = async () => {
@@ -59,6 +68,58 @@ export default function MyLibrary() {
   const filteredPQs = pqs.filter(pq => 
     pq.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handlePreview = (item: MaterialItem) => {
+    setPreviewMaterial(item);
+  };
+
+  const handleDownload = (item: MaterialItem) => {
+    if (item.fileUrl) {
+      const link = document.createElement('a');
+
+      const normalizedUrl = item.fileUrl.replace(/\\/g, '/');
+      let fullUrl = '';
+
+      if (normalizedUrl.startsWith('http')) {
+        fullUrl = normalizedUrl;
+      } else {
+        const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:3000';
+        const cleanPath = normalizedUrl.startsWith('/') ? normalizedUrl : `/${normalizedUrl}`;
+        fullUrl = `${baseUrl}${cleanPath}`;
+      }
+
+      console.log('Downloading from:', fullUrl);
+      link.href = fullUrl;
+
+      const extension = normalizedUrl.split('.').pop();
+      const fileName = item.title.toLowerCase().endsWith(`.${extension?.toLowerCase()}`)
+        ? item.title
+        : `${item.title}.${extension}`;
+
+      link.download = fileName;
+      link.target = '_blank';
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success(`Downloading ${item.title}...`);
+    } else {
+      toast.error('Download URL not available');
+    }
+  };
+
+  const handleDelete = async (item: MaterialItem) => {
+    try {
+      await api.delete(`/material/${item.id}`);
+      setMaterials(prev => prev.filter(m => m.id !== item.id));
+      setPQs(prev => prev.filter(m => m.id !== item.id));
+      toast.success('Material deleted successfully');
+    } catch (error: any) {
+      console.error('Failed to delete material:', error);
+      const message = error?.response?.data?.error || 'Failed to delete material';
+      toast.error(message);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -106,14 +167,20 @@ export default function MyLibrary() {
         <TabsContent value="materials" className="space-y-6">
           {isLoading ? (
             <LoadingSpinner />
-          ) : materials.length > 0 ? (
+          ) : filteredMaterials.length > 0 ? (
             <div className={`grid gap-4 ${
               viewMode === 'grid' 
-                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                ? 'grid-cols-3 md:grid-cols-4' 
                 : 'grid-cols-1'
             }`}>
-              {materials.map((material) => (
-                <MaterialCard key={material.id} {...material} />
+              {filteredMaterials.map((material) => (
+                <MaterialCard
+                  key={material.id}
+                  {...material}
+                  onPreview={() => handlePreview(material)}
+                  onDownload={() => handleDownload(material)}
+                  onDelete={() => setDeleteTarget(material)}
+                />
               ))}
             </div>
           ) : (
@@ -133,11 +200,17 @@ export default function MyLibrary() {
           ) : filteredPQs.length > 0 ? (
             <div className={`grid gap-4 ${
               viewMode === 'grid' 
-                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                ? 'grid-cols-3 md:grid-cols-4' 
                 : 'grid-cols-1'
             }`}>
               {filteredPQs.map((material: any) => (
-                <MaterialCard key={material.id} {...material} />
+                <MaterialCard
+                  key={material.id}
+                  {...material}
+                  onPreview={() => handlePreview(material)}
+                  onDownload={() => handleDownload(material)}
+                  onDelete={() => setDeleteTarget(material)}
+                />
               ))}
             </div>
           ) : (
@@ -151,6 +224,64 @@ export default function MyLibrary() {
           )}
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!previewMaterial} onOpenChange={(open) => !open && setPreviewMaterial(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{previewMaterial?.title}</DialogTitle>
+            <DialogDescription>File Preview</DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto p-4 border rounded-md bg-muted/50 mt-4">
+            {previewMaterial?.content ? (
+              <div className="whitespace-pre-wrap font-mono text-sm">
+                {previewMaterial.content}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                <Info className="h-8 w-8 mb-2 opacity-50" />
+                <p>No preview content available.</p>
+                {previewMaterial?.fileUrl && (
+                  <button 
+                    onClick={() => previewMaterial && handleDownload(previewMaterial)}
+                    className="mt-4 text-primary hover:underline"
+                  >
+                    Download to view file
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Delete file</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deleteTarget?.title}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-6 flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (!deleteTarget) return;
+                await handleDelete(deleteTarget);
+                setDeleteTarget(null);
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
